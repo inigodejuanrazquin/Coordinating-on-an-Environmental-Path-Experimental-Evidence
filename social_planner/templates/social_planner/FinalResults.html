@@ -1,0 +1,144 @@
+{{ block title }}
+    Experiment Complete - Final Results
+{{ endblock }}
+
+{{ block content }}
+
+<div class="container mt-4">
+    <!-- IMPORTANT NOTICE -->
+    <div class="row mb-4">
+        <div class="col-md-12">
+            <div class="alert" style="background-color: #ff6b6b; border: 3px solid #ee5a52; border-radius: 8px; padding: 20px;">
+                <h3 style="color: white; margin-top: 0; margin-bottom: 15px;">
+                    <i class="bi bi-exclamation-triangle-fill"></i> ⚠️ ATTENTION!
+                </h3>
+                <p style="color: white; font-size: 1.2em; margin-bottom: 0; line-height: 1.6;">
+                    Please <strong style="font-size: 1.15em; text-decoration: underline;">remain seated</strong> in your place until the experimenter calls you to process your payment. Please <strong style="font-size: 1.15em; text-decoration: underline;">stay silent</strong>, as other participants in the room are still making decisions in their respective economies.
+                </p>
+            </div>
+        </div>
+    </div>
+
+
+
+<div class="container mt-4">
+    <div class="row">
+        <div class="col-md-12">
+            <h1 class="text-center mb-4"> Experiment Complete!</h1>
+            <h3 class="text-center text-muted mb-5">Your Results from Both Economies</h3>
+        </div>
+    </div>
+
+    <div class="row mb-4">
+        <div class="col-md-12">
+            <div class="card border-success">
+                <div class="card-header bg-success text-white">
+                    <h4>Your Final Payment</h4>
+                </div>
+                <div class="card-body text-center">
+                    <h2 class="text-success">${{ total_payment }}</h2>
+                    <p class="lead">Total Payment (Including Show-Up Fee)</p>
+                    <hr>
+                    <div class="row">
+                        <div class="col-md-4">
+                            <p><strong>{{ first_treatment }} Payment:</strong></p>
+                            <p class="h4 text-primary">${{ first_payment }}</p>
+                            <p class="text-muted small">(Sum of period earnings)</p>
+                        </div>
+                        <div class="col-md-4">
+                            <p><strong>{{ second_treatment }} Payment:</strong></p>
+                            <p class="h4 text-primary">${{ second_payment }}</p>
+                            <p class="text-muted small">(Sum of period earnings)</p>
+                        </div>
+                        <div class="col-md-4">
+                            <p><strong>Show-Up Fee:</strong></p>
+                            <p class="h4 text-info">$10.00</p>
+                        </div>
+                    </div>
+                    <hr>
+                    <p><strong>Total Earnings from {{ first_treatment }}:</strong> ${{ first_payment }}</p>
+                    <p><strong>Total Earnings from {{ second_treatment }}:</strong> ${{ second_payment }}</p>
+                    <p><strong>Performance Payment (Both Treatments):</strong> ${{ performance_payment }}</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row mb-4">
+        <div class="col-md-12">
+            <div class="card border-primary">
+                <div class="card-header bg-primary text-white">
+                    <h5>{{ first_treatment }} Treatment - Detailed Results</h5>
+                </div>
+                <div class="card-body">
+                    <div class="table-responsive">
+                        <table class="table table-striped table-hover table-sm">
+                            <thead class="table-light">
+                                <tr>
+                                    <th>Period</th>
+                                    <th>Consumption</th>
+                                    <th>Period Earnings ($)</th>
+                                    <th>Cumulative Earnings ($)</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for round in first_treatment_rounds %}
+                                <tr>
+                                    <td>{{ round.round }}</td>
+                                    <td>{{ round.consumption }}</td>
+                                    <td class="text-success">${{ round.period_payoff }}</td>
+                                    <td class="fw-bold text-success">${{ round.cumulative_payoff }}</td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row mb-4">
+        <div class="col-md-12">
+            <div class="card border-info">
+                <div class="card-header bg-info text-white">
+                    <h5>{{ second_treatment }} Treatment - Detailed Results</h5>
+                </div>
+                <div class="card-body">
+                    <div class="table-responsive">
+                        <table class="table table-striped table-hover table-sm">
+                            <thead class="table-light">
+                                <tr>
+                                    <th>Period</th>
+                                    <th>Consumption</th>
+                                    <th>Period Earnings ($)</th>
+                                    <th>Cumulative Earnings ($)</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for round in second_treatment_rounds %}
+                                <tr>
+                                    <td>{{ round.round }}</td>
+                                    <td>{{ round.consumption }}</td>
+                                    <td class="text-success">${{ round.period_payoff }}</td>
+                                    <td class="fw-bold text-success">${{ round.cumulative_payoff }}</td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row">
+        <div class="col-md-12">
+            <div class="alert alert-success text-center">
+                <h4>Thank you for participating!</h4>
+                <p class="mb-0">Please wait for further instructions from the experimenter.</p>
+            </div>
+        </div>
+    </div>
+</div>
+{{ endblock }}

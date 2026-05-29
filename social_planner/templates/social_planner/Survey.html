@@ -1,0 +1,87 @@
+{% extends "otree/Page.html" %}
+{% load otree %}
+
+{% block title %}
+    Post-Experiment Survey
+{% endblock %}
+
+{% block content %}
+
+<style>
+    .survey-question {
+        margin-bottom: 2.5rem;
+    }
+    .demographics {
+        margin-top: 3rem;
+        padding-top: 2rem;
+        border-top: 2px solid #eee;
+    }
+    /* This CSS will apply a page break when printing */
+    @media print {
+        .demographics {
+            page-break-before: always;
+        }
+    }
+</style>
+
+<div class="card">
+    <div class="card-body">
+
+        <hr>
+        
+        <p>Please answer the following questions about the experiment.</p>
+
+        <div class="survey-question">
+            {% formfield player.survey_q1_expectation label="<b>Q1)</b> When the 1st Economy (Decentralized Market - with trading) ended, did you expect the economy to last more or less than it did? Circle one." %}
+            {% formfield player.survey_q1_how_many label="How many rounds more or less? [PLEASE WRITE HERE]" %}
+        </div>
+
+        <div class="survey-question">
+            {% formfield player.survey_q2_expectation label="<b>Q2)</b> When the 2nd Economy (Social Planner) ended, did you expect the economy to last more or less than it did? Circle one." %}
+            {% formfield player.survey_q2_how_many label="How many rounds more or less? [PLEASE WRITE HERE]" %}
+        </div>
+
+        <div class="survey-question">
+            {% formfield player.survey_q3_thought label="<b>Q3)</b> On a scale of 1 to 7, how much <b>thought</b> did you put into the choices you made in the experiment today, where 1 means no thought at all, and 7 indicates a great deal of thought?" %}
+        </div>
+
+        <div class="survey-question">
+            {% formfield player.survey_q4_effort label="<b>Q4)</b> On a scale of 1 to 7, how much <b>effort</b> did you put into the choices you made in the experiment today, where 1 means no effort at all, and 7 indicates a great deal of effort?" %}
+        </div>
+        
+        <div class="survey-question">
+            {% formfield player.survey_q5_earnings_effort label="<b>Q5)</b> On a scale of 1 to 7, how much do you think your earnings for participating in today’s experiment would have increased if you put a great deal of effort and thought into the choices you made compared to no effort or thought at all, where 1 means your payoffs would have been the same no matter how little or much effort and thought you put into your choices, and 7 means you believe your earnings would have been a lot greater had you put a lot of effort and thought into your decisions?" %}
+        </div>
+
+        <div class="survey-question">
+            {% formfield player.survey_q6_strategy label="<b>Q6)</b> Did you follow a particular strategy when making the decisions? Did you change this strategy anytime during the experiment? And if so, when and why?" %}
+        </div>
+
+        
+        <div class="demographics">
+            <h4>DEMOGRAPHICS</h4>
+            <p>To finalize, we would like to ask a few demographic questions.</p>
+
+            <div class="survey-question">
+                {% formfield player.survey_demo_gender %}
+            </div>
+
+            <div class="survey-question">
+                {% formfield player.survey_demo_birth_country %}
+            </div>
+
+            <div class="survey-question">
+                {% formfield player.survey_demo_degree %}
+            </div>
+
+            <div class="survey-question">
+                {% formfield player.survey_demo_year %}
+            </div>
+
+        </div>
+
+        {% next_button %}
+    </div>
+</div>
+
+{% endblock %}

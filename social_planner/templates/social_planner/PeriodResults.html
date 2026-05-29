@@ -1,0 +1,253 @@
+{{ block title }}
+    Period {{ period_number }} - Results
+{{ endblock }}
+
+{{ block content }}
+<div class="container mt-4">
+    <div class="row">
+        <div class="col-md-12">
+            <h2 class="text-center mb-4">
+                Period {{ period_number }} Complete
+                {% if is_market %}<br><small class="text-muted">Agent {{ agent_type }}</small>{% endif %}
+            </h2>
+        </div>
+    </div>
+
+    <div class="row mb-4">
+        <div class="col-md-12">
+            <div class="card">
+                <div class="row justify-content-center mb-4">
+                    <div class="col-md-8">
+                        <div class="card text-center border-primary">
+                            <div class="card-header bg-primary text-white">
+                                This Period's Earnings
+                            </div>
+                            <div class="card-body fs-4">
+                                <p class="card-text mb-0">
+                                    <span class="text-muted">Consumption: {{ consumption }} units → </span>
+                                    <span class="fw-bold text-success" style="font-size: 2rem;">${{ period_utility }}</span>
+                                </p>
+                                <p class="text-muted mt-2 mb-0"><small>Earnings = {{ exchange_rate }} × √({{ consumption }}) = ${{ period_utility }}</small></p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="card-header bg-secondary text-white"><h5>Your Period {{ period_number }} Decisions</h5></div>
+                <div class="card-body text-center">
+                    <div class="row">
+                        <div class="col"><p><strong>Consumption:</strong> {{ consumption }} units</p></div>
+                        <div class="col"><p><strong>Type-3 Investment:</strong> {{ brown_investment }} units</p></div>
+                        <div class="col"><p><strong>Type-1 Investment:</strong> {{ green_investment }} units <small class="text-muted">({{ green_cost }} output)</small></p></div>
+                        <div class="col"><p><strong>Period Earnings:</strong> ${{ period_utility }}</p></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row mb-4">
+        <div class="col-md-12">
+            <div class="card">
+                <div class="card-header bg-info text-white"><h5>State of the Economy for Period {{ next_period_number }}</h5></div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-4">
+                            <h6>New Capital Levels</h6>
+                            <p><strong>Type-3 Capital (k₃):</strong> {{ new_type3_capital_display }} units</p>
+                            <p><strong>Type-1 Capital (k₁):</strong> {{ new_type1_capital_display }} units</p>
+                        </div>
+                        <div class="col-md-4">
+                             <h6>Period Performance</h6>
+                            <p><strong>Your Output This Period:</strong> {{ period_output }} units</p>
+                        </div>
+                        <div class="col-md-4">
+                            <h6>Environmental Status</h6>
+                            <p><strong>Total Emissions This Period:</strong> {{ period_emissions }} units</p>
+                            <p><strong>New Temperature:</strong> {{ new_temperature }}</p>
+                            {% if not is_baseline %}<p><strong>Productivity Factor:</strong> {{ damage_factor }}</p>{% endif %}
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row mb-4">
+       <div class="col-md-6"><div class="card"><div class="card-header"><h6>Capital Evolution (incl. Period {{ next_period_number }})</h6></div><div class="card-body"><canvas id="capitalChart"></canvas></div></div></div>
+        <div class="col-md-6"><div class="card"><div class="card-header"><h6>Consumption & Earnings (through Period {{ period_number }})</h6></div><div class="card-body"><canvas id="consumptionChart"></canvas></div></div></div>
+    </div>
+    <div class="row mb-4">
+        <div class="col-md-6"><div class="card"><div class="card-header"><h6>Production Evolution (through Period {{ period_number }})</h6></div><div class="card-body"><canvas id="productionChart"></canvas></div></div></div>
+       <div class="col-md-6"><div class="card"><div class="card-header"><h6>Temperature Evolution (incl. Period {{ next_period_number }})</h6></div><div class="card-body"><canvas id="temperatureChart"></canvas></div></div></div>
+    </div>
+
+
+    <div class="row mb-4">
+        <div class="col-md-12 text-center">
+            <div class="card border-success">
+                <div class="card-header bg-success text-white">
+                    <h3> The Economy Continues to Period {{ next_period_number }}</h3>
+                </div>
+                <div class="card-body">
+                    <p class="lead">Prepare for the next round of decisions.</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row">
+        <div class="col-md-12 text-center">{{ next_button }}</div>
+    </div>
+</div>
+
+
+
+
+
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    try {
+        const historicalData = JSON.parse({{ historical_data|json }});
+        const isMarket = {{ is_market|json }};
+        const labels = historicalData.map(d => `P${d.period}`);
+        const historyPrev = historicalData.slice(0, -1);
+        const labelsPrev = labels.slice(0, -1);
+
+
+
+
+        // Capital Chart - 4 lines for DM, 2 for SP
+        if (isMarket) {
+            new Chart(document.getElementById('capitalChart'), {
+                type: 'line',
+                data: {
+                    labels: labels,
+                    datasets: [
+                        { 
+                            label: 'Type-3 Capital (k₃) (Pre-Trade)', 
+                            data: historicalData.map(d => d.brown_capital_pre),
+                            borderColor: 'rgba(50, 50, 50, 1)',
+                            borderDash: [5, 5],
+                            fill: false,
+                            pointRadius: 2
+                        },
+                        { 
+                            label: 'Type-3 Capital (k₃) (Post-Trade)', 
+                            data: historicalData.map(d => d.brown_capital_post),
+                            borderColor: 'rgba(50, 50, 50, 1)',
+                            fill: false,
+                            pointRadius: 2
+                        },
+                        { 
+                            label: 'Type-1 Capital (k₁) (Pre-Trade)', 
+                            data: historicalData.map(d => d.green_capital_pre),
+                            borderColor: 'rgba(150, 150, 150, 1)',
+                            borderDash: [5, 5],
+                            fill: false,
+                            pointRadius: 2
+                        },
+                        { 
+                            label: 'Type-1 Capital (k₁) (Post-Trade)', 
+                            data: historicalData.map(d => d.green_capital_post),
+                            borderColor: 'rgba(150, 150, 150, 1)',
+                            fill: false,
+                            pointRadius: 2
+                        }
+                    ]
+                }
+            });
+        } else {
+            // SP: Just 2 lines (no trading)
+            new Chart(document.getElementById('capitalChart'), {
+                type: 'line',
+                data: {
+                    labels: labels,
+                    datasets: [
+                        { 
+                            label: 'Type-3 Capital (k₃)', 
+                            data: historicalData.map(d => d.brown_capital_pre),
+                            borderColor: 'rgba(50, 50, 50, 1)',
+                            fill: false,
+                            pointRadius: 2
+                        },
+                        { 
+                            label: 'Type-1 Capital (k₁)', 
+                            data: historicalData.map(d => d.green_capital_pre),
+                            borderColor: 'rgba(150, 150, 150, 1)',
+                            fill: false,
+                            pointRadius: 2
+                        }
+                    ]
+                }
+            });
+        }
+                
+        
+        
+        
+        // Consumption & Earnings chart
+        new Chart(document.getElementById('consumptionChart'), {
+            type: 'line',
+            data: {
+                labels: labelsPrev,
+                datasets: [
+                    { 
+                        label: 'Consumption (c)', 
+                        data: historyPrev.map(d => d.consumption), 
+                        borderColor: 'rgba(75, 192, 192, 1)', 
+                        fill: false 
+                    },
+                    { 
+                        label: 'Earnings ($)', 
+                        data: historyPrev.map(d => d.utility), 
+                        borderColor: 'rgba(153, 102, 255, 1)', 
+                        fill: false
+                    }
+                ]
+            },
+            options: { 
+                scales: { 
+                    y: { 
+                        beginAtZero: true 
+                    } 
+                } 
+            }
+        });
+        
+        // Production Chart
+        new Chart(document.getElementById('productionChart'), {
+            type: 'line',
+            data: {
+                labels: labels,
+                datasets: [
+                    { 
+                        label: 'Output', 
+                        data: historicalData.map(d => d.output_initial), 
+                        borderColor: 'rgba(54, 162, 235, 1)',
+                        fill: false 
+                    }
+                ]
+            },
+            options: { scales: { y: { beginAtZero: true } } }
+        });
+
+        // Temperature Chart
+        new Chart(document.getElementById('temperatureChart'), {
+            type: 'line',
+            data: {
+                labels: labels,
+                datasets: [{ 
+                    label: 'Temperature (T)', 
+                    data: historicalData.map(d => d.temperature), 
+                    borderColor: 'rgba(255, 99, 132, 1)', 
+                    fill: false 
+                }]
+            }
+        });
+    } catch (e) { console.error('Chart error:', e); }
+});
+</script>
+
+{{ endblock }}

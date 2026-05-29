@@ -1,0 +1,136 @@
+{{ block title }}
+    Period {{ period_number }} - Market Results
+{{ endblock }}
+
+{{ block content }}
+<div class="container mt-4">
+    <h2 class="text-center mb-4">Capital Markets Results - Period {{ period_number }}</h2>
+
+    <div class="row mb-4">
+        <div class="col-md-6">
+            <div class="card">
+                <div class="card-header bg-light text-dark"><h5><i class="fas fa-industry"></i> Type-3 Capital Market</h5></div>
+                <div class="card-body">
+                    <!-- MARKET CLEARING PRICE -->
+                    <div class="alert text-center mb-3" style="background-color: #404040; border: 3px solid #2a2a2a; padding: 15px;">
+                        <h4 style="margin: 0; color: #ffffff; font-size: 1.5rem;"><strong>Market Clearing Price: {{ brown_avg_price }}</strong></h4>
+                        <small style="color: #ffffff;">(output units)</small>
+                    </div>
+                    
+                    <p><strong>Total Volume Traded:</strong> {{ brown_total_volume }} units</p>
+                    <hr>
+                    <h6>Your Trades:</h6>
+                    <p><strong>You Bought:</strong> {{ brown_bought }} units</p>
+                    <p><strong>You Sold:</strong> {{ brown_sold }} units</p>
+                    {% if brown_bought > 0 and brown_sold > 0 %}
+                        <p class="text-info">You both bought and sold in this market.</p>
+                    {% elif brown_bought > brown_sold %}
+                        <p class="text-success">You were a net buyer.</p>
+                    {% elif brown_sold > 0 %}
+                        <p class="text-danger">You were a net seller.</p>
+                    {% else %}
+                        <p class="text-muted">You did not trade.</p>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-6">
+            <div class="card">
+                <div class="card-header bg-light text-dark"><h5><i class="fas fa-leaf"></i> Type-1 Capital Market</h5></div>
+                <div class="card-body">
+                    <!-- MARKET CLEARING PRICE -->
+                    <div class="alert text-center mb-3" style="background-color: #e0e0e0; border: 3px solid #999999; padding: 15px;">
+                        <h4 style="margin: 0; color: #000000; font-size: 1.5rem;"><strong>Market Clearing Price: {{ green_avg_price }}</strong></h4>
+                        <small style="color: #000000;">(output units)</small>
+                    </div>
+                    
+                    <p><strong>Total Volume Traded:</strong> {{ green_total_volume }} units</p>
+                    <hr>
+                    <h6>Your Trades:</h6>
+                    <p><strong>You Bought:</strong> {{ green_bought }} units</p>
+                    <p><strong>You Sold:</strong> {{ green_sold }} units</p>
+                    {% if green_bought > 0 and green_sold > 0 %}
+                        <p class="text-info">You both bought and sold in this market.</p>
+                    {% elif green_bought > green_sold %}
+                        <p class="text-success">You were a net buyer.</p>
+                    {% elif green_sold > 0 %}
+                        <p class="text-danger">You were a net seller.</p>
+                    {% else %}
+                        <p class="text-muted">You did not trade.</p>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row mb-4">
+        <div class="col-md-12">
+            <div class="card">
+                <div class="card-header bg-primary text-white"><h5>Your Resource Summary</h5></div>
+                <table class="table table-hover mb-0">
+                    <thead class="table-light">
+                        <tr>
+                            <th>Resource</th>
+                            <th>Before Markets</th>
+                            <th>Change</th>
+                            <th>After Markets</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td><strong>Type-3 Capital (k₃)</strong></td>
+                            <td>{{ pre_brown_k }}</td>
+                            <td>
+                                {% if brown_bought > brown_sold %}
+                                    <span class="text-success">+{{ brown_bought }}</span>
+                                {% elif brown_sold > brown_bought %}
+                                    <span class="text-danger">-{{ brown_sold }}</span>
+                                {% else %}
+                                    <span class="text-muted">0.00</span>
+                                {% endif %}
+                            </td>
+                            <td><strong>{{ post_brown_k }}</strong></td>
+                        </tr>
+                        <tr>
+                            <td><strong>Type-1 Capital (k₁)</strong></td>
+                            <td>{{ pre_green_k }}</td>
+                            <td>
+                                {% if green_bought > green_sold %}
+                                    <span class="text-success">+{{ green_bought }}</span>
+                                {% elif green_sold > green_bought %}
+                                    <span class="text-danger">-{{ green_sold }}</span>
+                                {% else %}
+                                    <span class="text-muted">0.00</span>
+                                {% endif %}
+                            </td>
+                            <td><strong>{{ post_green_k }}</strong></td>
+                        </tr>
+                        <tr class="table-info">
+                            <td><strong>Available Output</strong></td>
+                            <td>{{ pre_output }}</td>
+                            <td>{{ change_output }}</td>
+                            <td><strong>{{ post_output }}</strong></td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <div class="row">
+        <div class="col-md-12 text-center">
+            <div class="alert alert-info">
+                <strong>Next Step:</strong> You will now allocate your available output between consumption and investment.
+            </div>
+            {{ next_button }}
+        </div>
+    </div>
+</div>
+
+<style>
+.card {
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
+</style>
+{{ endblock }}

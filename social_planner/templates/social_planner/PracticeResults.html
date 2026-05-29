@@ -1,0 +1,348 @@
+{{ block title }}
+    Practice Round - Market Results
+{{ endblock }}
+
+{{ block content }}
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+<div class="container mt-4">
+    <div class="row">
+        <div class="col-md-12">
+            <div class="alert alert-success text-center">
+                <h3><i class="fas fa-chart-line"></i> Practice Round - Market Results</h3>
+                <p class="mb-0">Here's how the supply and demand curves look based on everyone's orders.</p>
+                <p class="mb-0"><strong style="background-color: #fff59d; padding: 2px 8px; border-radius: 3px;">Yellow segments</strong> show YOUR orders.</p>
+            </div>
+        </div>
+    </div>
+
+    <div class="row mb-5">
+        <div class="col-md-12">
+            <div class="card border-warning">
+                <div class="card-header" style="background-color: #404040; color: #ffffff;">
+                    <h4><i class="fas fa-industry"></i> Type-3 Capital Market</h4>
+                </div>
+                <div class="card-body">
+                    <div style="height: 500px; position: relative;">
+                        <canvas id="brownMarketChart"></canvas>
+                    </div>
+                    
+                    
+                    <div class="row mt-4 align-items-center">
+                        <div class="col-md-7">
+                            <div class="alert text-center" style="background-color: #404040; border: 3px solid #2a2a2a; padding: 20px;">
+                                <h4 style="color: #ffffff; margin: 0;"><strong>Market Clearing Price: {{ brown_price }}</strong></h4>
+                                <p style="color: #ffffff; margin-top: 10px; margin-bottom: 0;">
+                                    Orders execute at this price where supply meets demand.<br>
+                                    <small>All buyers willing to pay ≥ {{ brown_price }} and sellers willing to accept ≤ {{ brown_price }} would have traded.</small>
+                                </p>
+                            </div>
+                        </div>
+                        <div class="col-md-5">
+                            <div class="card">
+                                <div class="card-header bg-light"><h6>Your Simulated Trades</h6></div>
+                                <div class="card-body" style="padding: 1rem;">
+                                    <p class="mb-1"><strong>You would have bought:</strong> {{ brown_bought }} units</p>
+                                    <p class="mb-2"><strong>You would have sold:</strong> {{ brown_sold }} units</p>
+                                    <hr class="my-1">
+                                    {% if brown_bought > brown_sold %}
+                                        <p class="text-success mb-0 small">You would have been a <strong>net buyer</strong>.</p>
+                                    {% elif brown_sold > brown_bought %}
+                                        <p class="text-danger mb-0 small">You would have been a <strong>net seller</strong>.</p>
+                                    {% elif brown_bought > 0 %}
+                                        <p class="text-info mb-0 small">Your trades would have balanced out.</p>
+                                    {% else %}
+                                        <p class="text-muted mb-0 small">You would not have traded.</p>
+                                    {% endif %}
+                                </div>
+                            </div>
+                        </div>
+                    </div>                   
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row mb-4">
+        <div class="col-md-12">
+            <div class="card border-success">
+                <div class="card-header" style="background-color: #e0e0e0; color: #000000;">
+                    <h4><i class="fas fa-leaf"></i> Type-1 Capital Market</h4>
+                </div>
+                <div class="card-body">
+                    <div style="height: 500px; position: relative;">
+                        <canvas id="greenMarketChart"></canvas>
+                    </div>                   
+                    <div class="row mt-4 align-items-center">
+                        <div class="col-md-7">
+                            <div class="alert text-center" style="background-color: #e0e0e0; border: 3px solid #999999; padding: 20px;">
+                                <h4 style="color: #000000; margin: 0;"><strong>Market Clearing Price: {{ green_price }}</strong></h4>
+                                <p style="color: #000000; margin-top: 10px; margin-bottom: 0;">
+                                    Orders execute at this price where supply meets demand.<br>
+                                    <small>All buyers willing to pay ≥ {{ green_price }} and sellers willing to accept ≤ {{ green_price }} would have traded.</small>
+                                </p>
+                            </div>
+                        </div>
+                        <div class="col-md-5">
+                            <div class="card">
+                                <div class="card-header bg-light"><h6>Your Simulated Trades</h6></div>
+                                <div class="card-body" style="padding: 1rem;">
+                                    <p class="mb-1"><strong>You would have bought:</strong> {{ green_bought }} units</p>
+                                    <p class="mb-2"><strong>You would have sold:</strong> {{ green_sold }} units</p>
+                                    <hr class="my-1">
+                                    {% if green_bought > green_sold %}
+                                        <p class="text-success mb-0 small">You would have been a <strong>net buyer</strong>.</p>
+                                    {% elif green_sold > green_bought %}
+                                        <p class="text-danger mb-0 small">You would have been a <strong>net seller</strong>.</p>
+                                    {% elif green_bought > 0 %}
+                                        <p class="text-info mb-0 small">Your trades would have balanced out.</p>
+                                    {% else %}
+                                        <p class="text-muted mb-0 small">You would not have traded.</p>
+                                    {% endif %}
+                                </div>
+                            </div>
+                        </div>
+                    </div>                   
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row">
+        <div class="col-md-12">
+            <div class="alert alert-info text-center">
+                <h5><strong>Understanding the Graphs</strong></h5>
+                <div class="row text-left">
+                    <div class="col-md-6">
+                        <p><strong style="color: #2196F3;">🔵 Blue Demand Curve:</strong> Shows buyers' orders (bids) from highest to lowest price. Each step represents one agent's willingness to buy.</p>
+                        <p><strong style="color: #FF5722;">🔴 Red Supply Curve:</strong> Shows sellers' orders (asks) from lowest to highest price. Each step represents one agent's willingness to sell.</p>
+                    </div>
+                    <div class="col-md-6">
+                        <p><strong style="color: #4CAF50;">✅ Market Clearing Price (green line):</strong> Where supply meets demand. All trades execute at this price.</p>
+                        <p><strong style="background-color: #fff59d; padding: 2px 6px; border-radius: 3px;">🟡 Your Orders (yellow):</strong> Your bid/ask segments are highlighted to show your position in the market.</p>
+                    </div>
+                </div>
+                <hr>
+                <p class="mb-0"><strong>Ready to start the real rounds?</strong> Click Continue to begin the actual decentralized market treatment.</p>
+            </div>
+            {{ next_button }}
+        </div>
+    </div>
+</div>
+
+<style>
+.card {
+    box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+}
+</style>
+
+
+
+
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Get market data from Python
+    const brownData = {{ brown_market_data|json }};
+    const greenData = {{ green_market_data|json }};
+    
+    // Player's orders
+    const playerBrownBid = {{ player_brown_bid }};
+    const playerBrownAsk = {{ player_brown_ask }};
+    const playerGreenBid = {{ player_green_bid }};
+    const playerGreenAsk = {{ player_green_ask }};
+
+    // Colors
+    const DEMAND_COLOR = 'rgba(33, 150, 243, 0.9)';  // Blue
+    const SUPPLY_COLOR = 'rgba(244, 67, 54, 0.9)';   // Red
+    const PLAYER_COLOR = 'rgba(255, 235, 59, 0.95)'; // Yellow
+    const EQUILIBRIUM_COLOR = 'rgba(76, 175, 80, 0.8)'; // Green
+
+    function createStaircaseCurve(orders) {
+        const points = [];
+        let cumQty = 0;
+        
+        orders.forEach(order => {
+            points.push({x: cumQty, y: order.price, isPlayer: order.is_player});
+            cumQty += order.quantity;
+            points.push({x: cumQty, y: order.price, isPlayer: order.is_player});
+        });
+        
+        return points;
+    }
+
+    function createMarketChart(canvasId, demandOrders, supplyOrders, equilibriumPrice) {
+        const canvas = document.getElementById(canvasId);
+        const ctx = canvas.getContext('2d');
+
+        if (demandOrders.length === 0 && supplyOrders.length === 0) {
+            ctx.textAlign = 'center';
+            ctx.font = '18px "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif';
+            ctx.fillStyle = '#6c757d';
+            ctx.fillText('No valid orders were submitted in this market.', canvas.width / 2, canvas.height / 2);
+            return;
+        }
+
+        const sortedDemand = [...demandOrders].sort((a, b) => b.price - a.price);
+        const sortedSupply = [...supplyOrders].sort((a, b) => a.price - b.price);
+        
+        const demandPoints = createStaircaseCurve(sortedDemand);
+        const supplyPoints = createStaircaseCurve(sortedSupply);
+        
+        const maxQtyDemand = demandPoints.length > 0 ? demandPoints[demandPoints.length - 1].x : 0;
+        const maxQtySupply = supplyPoints.length > 0 ? supplyPoints[supplyPoints.length - 1].x : 0;
+        const maxQty = Math.max(maxQtyDemand, maxQtySupply) * 1.1 || 10;
+        
+        const allPrices = [...demandOrders.map(d => d.price), ...supplyOrders.map(s => s.price)];
+        const minPrice = allPrices.length > 0 ? Math.min(...allPrices) * 0.8 : 0;
+        const maxPrice = allPrices.length > 0 ? Math.max(...allPrices) * 1.2 : 5;
+
+        const datasets = [];
+
+
+
+        // 1. Draw the FULL demand curve (including player's order) in blue
+        datasets.push({
+            label: 'Demand (Buyers)',
+            data: demandPoints, // Use the complete, unfiltered points
+            borderColor: DEMAND_COLOR,
+            backgroundColor: 'transparent',
+            borderWidth: 4,
+            stepped: 'before',
+            fill: false,
+            pointRadius: 0,
+            tension: 0,
+            order: 2 // Draw this layer in the back
+        });
+
+        // 2. Draw the FULL supply curve (including player's order) in red
+        datasets.push({
+            label: 'Supply (Sellers)',
+            data: supplyPoints, // Use the complete, unfiltered points
+            borderColor: SUPPLY_COLOR,
+            backgroundColor: 'transparent',
+            borderWidth: 4,
+            stepped: 'before',
+            fill: false,
+            pointRadius: 0,
+            tension: 0,
+            order: 2 // Draw this layer in the back
+        });
+        
+        // 3. Draw the player's bid as a THICKER highlight on top
+        if (demandPoints.some(p => p.isPlayer)) {
+            datasets.push({
+                label: 'Your Bid Order',
+                data: demandPoints.filter(p => p.isPlayer), // Only the player's segment
+                borderColor: PLAYER_COLOR,
+                backgroundColor: 'transparent',
+                borderWidth: 8, // Make it thicker to act as a highlight
+                stepped: 'before',
+                fill: false,
+                pointRadius: 0,
+                tension: 0,
+                order: 1 // Draw this on top of the base curves
+            });
+        }
+        
+        // 4. Draw the player's ask as a THICKER highlight on top
+        if (supplyPoints.some(p => p.isPlayer)) {
+            datasets.push({
+                label: 'Your Ask Order',
+                data: supplyPoints.filter(p => p.isPlayer),
+                borderColor: PLAYER_COLOR,
+                backgroundColor: 'transparent',
+                borderWidth: 8, // Make it thicker
+                stepped: 'before',
+                fill: false,
+                pointRadius: 0,
+                tension: 0,
+                order: 1 // Draw this on top of the base curves
+            });
+        }
+
+        // 5. Draw the market clearing price line on the very top
+        if (equilibriumPrice !== null && equilibriumPrice >= 0) {
+            datasets.push({
+                label: 'Market Clearing Price',
+                data: [{x: 0, y: equilibriumPrice}, {x: maxQty, y: equilibriumPrice}],
+                borderColor: EQUILIBRIUM_COLOR,
+                backgroundColor: 'transparent',
+                borderWidth: 3,
+                borderDash: [15, 10],
+                fill: false,
+                pointRadius: 0,
+                order: 0 // Draw this on the very top
+            });
+        }
+        
+
+
+        new Chart(ctx, {
+            type: 'line',
+            data: { datasets: datasets },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                scales: {
+                    x: {
+                        type: 'linear',
+                        position: 'bottom',
+                        title: { display: true, text: 'Quantity (Cumulative)', font: { size: 16, weight: 'bold' } },
+                        min: 0,
+                        max: maxQty,
+                        ticks: { font: { size: 14 } }
+                    },
+                    y: {
+                        title: { display: true, text: 'Price (Output Units)', font: { size: 16, weight: 'bold' } },
+                        min: minPrice,
+                        max: maxPrice,
+                        ticks: { font: { size: 14 } }
+                    }
+                },
+                plugins: {
+                    legend: {
+                        display: true,
+                        position: 'top',
+                        labels: {
+                            font: { size: 14 },
+                            usePointStyle: true,
+                            padding: 15,
+                            // Filter out the main curves if a player highlight exists for that type
+                            filter: function(legendItem, chartData) {
+                                if (legendItem.text === 'Demand (Buyers)' && chartData.datasets.some(d => d.label === 'Your Bid Order')) {
+                                    return false;
+                                }
+                                if (legendItem.text === 'Supply (Sellers)' && chartData.datasets.some(d => d.label === 'Your Ask Order')) {
+                                    return false;
+                                }
+                                return true;
+                            }
+                        }
+                    },
+                    tooltip: {
+                        enabled: true,
+                        mode: 'nearest',
+                        intersect: false,
+                        callbacks: {
+                            label: function(context) {
+                                return `${context.dataset.label}: Price = ${context.parsed.y.toFixed(2)}, Qty = ${context.parsed.x.toFixed(1)}`;
+                            }
+                        }
+                    }
+                },
+                interaction: {
+                    mode: 'nearest',
+                    axis: 'xy',
+                    intersect: false
+                }
+            }
+        });
+    }
+
+    // Create both market charts
+    createMarketChart('brownMarketChart', brownData.demand, brownData.supply, brownData.equilibrium);
+    createMarketChart('greenMarketChart', greenData.demand, greenData.supply, greenData.equilibrium);
+});
+</script>
+{{ endblock }}

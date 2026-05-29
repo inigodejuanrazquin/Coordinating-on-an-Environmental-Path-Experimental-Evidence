@@ -1,0 +1,1203 @@
+{{ block title }}
+    Experiment Instructions
+{{ endblock }}
+
+{{ block content }}
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
+<script>
+// Configuration for LaTeX rendering
+MathJax = {
+  tex: {
+    inlineMath: [['$', '$'], ['\\(', '\\)']],
+    displayMath: [['$$', '$$'], ['\\[', '\\]']]
+  },
+  svg: {
+    fontCache: 'global'
+  }
+};
+</script>
+<script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+
+<div class="container mt-4">
+    <div class="row"><div class="col-md-12"><h2 class="text-center mb-4">Experiment Instructions</h2></div></div>
+
+    <!-- Section 1: Welcome -->
+    <div class="card mb-4">
+        <div class="card-header"><h4>Welcome</h4></div>
+        <div class="card-body">
+            <p>Thank you for taking part in this study.</p>
+            <p>I will read the following instructions out loud, please follow them on your screen. If you have any question, please do not hesitate to raise your hand. I will first go to your spot to hear the question, and then I will explain the question and answer for everyone.</p>
+            <p>This study might include concepts, figures or functions that you are not very familiar with. That's ok. Please do not feel discouraged if there's one or more things that are not clear from the instructions. We will be happy to answer any question during the Instructions part.</p>
+        </div>
+    </div>
+
+    <!-- Section 2: Your Role -->
+    <div class="card mb-4">
+        <div class="card-header"><h4>Your Role in This Economy</h4></div>
+        <div class="card-body">
+            {% if is_market_treatment %}
+                <p>Imagine you are the owner and manager of an enterprise/firm in a hypothetical economy-world. This economy is formed by 5 firms: you and other 4 people in this room.</p>
+                <p>You (the firm) will use two types of capital – <strong>'type-3' capital</strong> and <strong>'type-1' capital</strong> – to produce your output.</p>
+                <p>Assume your output is a generic resource: something that can be used for either consumption or savings.</p>
+                <p>When you increase your 'type-3' capital, or 'type-1' capital, or both, your output will increase. The exact increase will depend on how much you increase the capital amount(s). This will be introduced later with a production function and graphs.</p>
+            {% else %}
+                <p>Imagine you are the only person in a hypothetical economy-world. As such, you will run the whole economy by yourself.</p>
+                <p>You can imagine this economy as having just one household and one enterprise/firm:</p>
+                <ul>
+                    <li>(i) the household consumes, and</li>
+                    <li>(ii) the firm produces</li>
+                </ul>
+                <p>This economy will run for several periods (further explained later).</p>
+                <p>For the household to be able to consume, the firm needs to produce. The firm uses two types of capital – <strong>'type-3' capital</strong> and <strong>'type-1' capital</strong> – to produce your output.</p>
+                <p>Assume your output is a generic resource: something that can be used for either consumption or savings.</p>
+                <p>When you increase your 'type-3' capital, or 'type-1' capital, or both, your output will increase. The exact increase will depend on how much you increase the capital amount(s). This will be introduced later with a production function and graphs.</p>
+            {% endif %}
+        </div>
+    </div>
+
+
+
+
+
+    <!-- Section 3: Decisions and Goals -->
+    <div class="card mb-4">
+    <div class="card-header"><h4>Your Decisions and Goal</h4></div>
+    <div class="card-body">
+        {% if is_market_treatment %}
+            <p>Thus, as the owner-manager of a firm, you will make production decisions. However, you are also a member of a household, and as such, you will need to decide your consumption amount every period.</p>
+            <p><strong>In this simple economy, you are both:</strong></p>
+            <ol>
+                <li>A member of a household, and</li>
+                <li>The owner/manager of a firm</li>
+            </ol>
+            <p>You can call yourself a "household-firm".</p>
+        {% else %}
+            <p><strong>In this simple economy, you are both:</strong></p>
+            <ol>
+                <li>the only household, and</li>
+                <li>the owner/manager of the only firm</li>
+            </ol>
+            <p>You can call yourself the "planner": you make all decisions in this hypothetical world.</p>
+        {% endif %}
+        
+        <p class="mt-4">In any given period, your consumption generates "utility" which translates directly into your dollar earnings for that period. <strong>More consumption → More utility → More earnings.</strong></p>
+        
+        <div class="alert alert-success mt-4">
+            <h5 class="alert-heading"><strong>YOUR GOAL:</strong></h5>
+            <p class="mb-0"><strong>Your goal is to maximize your total earnings across all periods the economy will run.</strong></p>
+            <p class="mt-2">On top of the fixed <strong>$10 show-up fee</strong>, your compensation for this experiment is the <strong>sum of your earnings from all periods of the study.</strong></p>
+
+            <div class="mt-4 p-3 bg-white border rounded">
+                <h6 class="text-center mb-3"><strong>How Consumption Translates to Earnings:</strong></h6>
+                {% if is_market_treatment %}
+                    <p class="mb-2">For your assigned role (<strong>Agent {{ agent_type }}</strong>), your period earnings are calculated as:</p>
+                    <div class="text-center py-2 bg-light rounded border mb-3">
+                        <p class="mb-0" style="font-size: 1.1rem;">
+                            <strong>Period Earnings ($) = {{ payoff_conversion_rate }} × √(consumption)</strong>
+                        </p>
+                    </div>
+                    <div class="alert alert-info mb-0">
+                        <strong>Example:</strong> If you consume 16 units in a period:<br>
+                        Period Earnings = {{ payoff_conversion_rate }} × √16 = {{ payoff_conversion_rate }} × 4 = <strong>${{ example_earnings }}</strong>
+                    </div>
+                {% else %}
+                    <p class="mb-2">Your period earnings are calculated as:</p>
+                    <div class="text-center py-2 bg-light rounded border mb-3">
+                        <p class="mb-0" style="font-size: 1.1rem;">
+                            <strong>Period Earnings ($) = {{ payoff_conversion_rate }} × √(consumption)</strong>
+                        </p>
+                    </div>
+                    <div class="alert alert-info mb-0">
+                        <strong>Example:</strong> If you consume 16 units in a period:<br>
+                        Period Earnings = {{ payoff_conversion_rate }} × √16 = {{ payoff_conversion_rate }} × 4 = <strong>${{ example_earnings }}</strong>
+                    </div>
+                {% endif %}
+                <p class="mt-3 mb-0 text-center"><strong>Your total payment = Show-up fee ($10) + Sum of all period earnings</strong></p>
+            </div>
+            </div>
+    </div>
+</div>
+
+
+
+
+    <!-- Section 4: Utility Function -->
+    <div class="card mb-4">
+        <div class="card-header"><h4>How Consumption Generates Earnings</h4></div>
+        <div class="card-body">
+            <p>Consuming output generates earnings. The more you consume in a period, the more you earn, but with diminishing returns. That is, each additional unit of consumption provides additional earnings, but the increase becomes smaller as you consume more.</p>
+            
+            <div class="card bg-light mb-3">
+                <div class="card-body">
+                    <h6 class="card-title text-center">Interactive Graph 1: Earnings in period $t$ from consumption $c_t$</h6>
+                    <div style="width: 100%;"><canvas id="utilityChart"></canvas></div>
+                    <div class="mt-3 text-center">
+                        <label for="g1_c_slider" class="form-label">Consumption ($c_t$): <span id="g1_c_val">10.0</span></label>
+                        <input type="range" class="form-range" min="0.1" max="20" step="0.1" value="10" id="g1_c_slider">
+                        <p class="mt-2"><strong>Resulting Period Earnings: $<span id="g1_u_val">0</span></strong></p>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="card border-secondary mb-4">
+                <div class="card-header">Mathematical Formulation</div>
+                <div class="card-body">
+                    {% if is_market_treatment %}
+                        <p>Your period earnings (in dollars) from a given amount of consumption ($c_t$) are:</p>
+                        $$ \text{Period Earnings}_t = {{ payoff_conversion_rate }} \times \sqrt{c_t} $$
+                    {% else %}
+                        <p>Your period earnings (in dollars) from a given amount of consumption ($c_t$) are:</p>
+                        $$ \text{Period Earnings}_t = {{ payoff_conversion_rate }} \times \sqrt{c_t} $$
+                    {% endif %}
+                    <p>The square root captures the idea of diminishing marginal earnings from consumption.</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Section 5: The Big Picture -->
+    <div class="card mb-4">
+        <div class="card-header"><h4>The Big Picture: Capital, Production, and Environment</h4></div>
+        <div class="card-body">
+            {% if is_market_treatment %}
+                <p>In this economy there are 5 household-firms in total: you and other 4 participants that are in this computer room right now.</p>
+                <p>You would have noticed that there are 20 people in this room. That's because there are 4 economies. These 4 economies are separate worlds. That is, there's no interaction between them. You are initially assigned to either Economy 1, Economy 2, Economy 3 or Economy 4; and that stays constant for the whole study.</p>
+                <p><strong>In conclusion, you only have to focus on your own economy: composed of you and 4 other participants in this room. The participants in your economy are the same people for the whole study.</strong></p>
+            {% endif %}
+            
+            <p>As a member of a household, your earnings derive from your consumption. The higher your consumption, the higher your earnings.</p>
+            <p><strong>To consume, you need resources. These resources will come from production. To produce, you will need capital: "type-3" capital and "type-1" capital.</strong></p>
+            
+            <ul>
+                <li><strong>'type-1'</strong> capital emits <strong>1 unit of emission</strong> per unit of $k_1$ employed in production.</li>
+                <li><strong>'type-3'</strong> capital emits <strong>3 units of emissions</strong> per unit of $k_3$ employed in production.</strong></li>  
+                <li><strong>'That is, $k_3$ is three times more polluting than $k_1$ </strong></li> 
+            </ul>
+            
+            <p>Emissions will increase the temperature of this economy (of this hypothetical world) <strong>above the pre-industrial (i.e. natural) baseline.</strong></p>
+            
+            {% if is_baseline %}
+                <div class="alert alert-info">
+                    <strong>For simplicity, assume temperature does not affect you {% if is_market_treatment %}nor any other household-firm{% endif %} in this economy.</strong>
+                    <p class="mb-0">(That is, {% if is_market_treatment %}firms' production and households' consumption{% else %}the firm's production and the household's consumption{% endif %} are unaffected by the level of temperature in this economy. Still, if you see temperature numbers in later pages, take these as deviation (anomaly) from the pre-industrial or natural Earth's average temperature (It is not in Celsius or Fahrenheit, but in an abstarct temperature scale.) </p>
+                </div>
+            {% else %}
+                <div class="alert alert-warning">
+                    <strong>Temperature affects the productivity of {% if is_market_treatment %}all household-firms{% else %}the firm{% endif %} in {% if is_market_treatment %}your{% else %}this{% endif %} economy.</strong>
+                    <p>The higher the temperature rises above the natural baseline, the less productive capital becomes.</p>
+                    <p class="mb-0">That is, with a higher temperature, less output will be produced with the same capital amount(s).</p>
+                </div>
+            {% endif %}
+        </div>
+    </div>
+
+    <!-- Section 6: Production Function -->
+    <div class="card mb-4">
+        <div class="card-header"><h4>Production from Capital</h4></div>
+        <div class="card-body">
+            <p>Output ($y_t$) is generated from 'Type-3 Capital (k₃)' ($k_{3,t}$) and 'Type-1 Capital (k₁)' ($k_{1,t}$){% if not is_baseline %}, affected by the environmental damage factor ($\Omega_t$){% endif %}.</p>
+            
+            <div class="card bg-light mb-3">
+                <div class="card-body">
+                    <h6 class="card-title text-center">Interactive Graph 2: Production Function</h6>
+                    <div id="productionChart3D" style="width:100%; height:400px;"></div>
+                    <div class="row mt-3 text-center">
+                        <div class="col-6">
+                            <label for="g2_k_slider" class="form-label">Type-3 Capital (k₃) ($k_{3,t}$): <span id="g2_k_val">5</span></label>
+                            <input type="range" class="form-range" min="0" max="20" step="0.1" value="5" id="g2_k_slider">
+                        </div>
+                        <div class="col-6">
+                            <label for="g2_th_slider" class="form-label">Type-1 Capital (k₁) ($k_{1,t}$): <span id="g2_th_val">5</span></label>
+                            <input type="range" class="form-range" min="0" max="20" step="0.1" value="5" id="g2_th_slider">
+                        </div>
+                    </div>
+                    <p class="mt-2 text-center"><strong>Resulting Production ($y_t$): <span id="g2_y_val">0</span></strong></p>
+                </div>
+            </div>
+            
+            <div class="card border-secondary mb-4">
+                <div class="card-header">Mathematical Formulation</div>
+                <div class="card-body">
+                    <p>Production ($y_t$) is determined by total factor productivity (TFP), Type-3 capital (k₃) ($k_{3,t}$), Type-1 capital (k₁) ($k_{1,t}$){% if not is_baseline %}, and an environmental damage factor ($\Omega_t$){% endif %}:</p>
+                    {% if is_market_treatment %}
+                        {% if is_baseline %}
+                            $$ y_{i,t} = {{ productivity }} \cdot k_{1,i,t}^{0.22} \cdot k_{3,i,t}^{0.33} $$
+                        {% else %}
+                            $$ y_{i,t} = {{ productivity }} \cdot \Omega_t \cdot k_{1,i,t}^{0.22} \cdot k_{3,i,t}^{0.33} $$
+                        {% endif %}
+                    {% else %}
+                        {% if is_baseline %}
+                            $$ y_t = {{ productivity }} \cdot k_{1,t}^{0.22} \cdot k_{3,t}^{0.33} $$
+                        {% else %}
+                            $$ y_t = {{ productivity }} \cdot \Omega_t \cdot k_{1,t}^{0.22} \cdot k_{3,t}^{0.33} $$
+                        {% endif %}
+                    {% endif %}
+                    <p>Note the key difference between $k_1$ and $k_3$: <br><br>
+<strong>$k_3$ produces more than $k_1$ (for the same amount of input), <br><br>
+but $k_3$ emits three times more emissions, which impacts future temperature.</strong></p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Capital Depreciation Cascade -->
+    <div class="card mb-4">
+        <div class="card-header"><h4>Capital Depreciation Over Time</h4></div>
+        <div class="card-body">
+            <p>Capital depreciates at <strong>10% per period</strong>. This means if you invest 10 units today, 90% (9 units) will remain after next period's production.</p>
+            <p><strong>Use the calculator below to see how your investment depreciates over multiple periods:</strong></p>
+            
+            <div class="card bg-light mb-3">
+                <div class="card-body">
+                    <div class="row mb-3">
+                        <div class="col-md-6">
+                            <label for="deprec_capital_type" class="form-label"><strong>Capital Type:</strong></label>
+                            <select id="deprec_capital_type" class="form-select">
+                                <option value="brown">Type-3 Capital (k₃)</option>
+                                <option value="green">Type-1 Capital (k₁)</option>
+                            </select>
+                        </div>
+                        <div class="col-md-6">
+                            <label for="deprec_amount" class="form-label"><strong>Investment Amount in Period t:</strong></label>
+                            <div class="input-group">
+                                <input type="number" id="deprec_amount" class="form-control" value="1" min="1" step="1">
+                                <span class="input-group-text">units</span>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div id="depreciation_cascade" class="depreciation-cascade"></div>
+                </div>
+            </div>
+            
+            <p class="text-muted"><small><strong>Note:</strong> Both Type-3 and Type-1 capital depreciate at 10% per period. </small></p>
+        </div>
+    </div>
+
+    {% if not is_baseline %}
+    <!-- Section 7: Environmental System -->
+    <div class="card mb-4">
+        <div class="card-header"><h4>The Environmental System</h4></div>
+        <div class="card-body">
+            <p>The use of capital has environmental consequences which can, in turn, affect production.</p>
+            <p class="alert alert-info" style="margin-bottom: 10px;"><strong>Important:</strong> In this experiment, we track temperature as the <strong>deviation (anomaly) from the pre-industrial or natural baseline of 14°C</strong>. So when we say "temperature = 0°C", it means the planet is at 14°C absolute. When "temperature = +2°C", it means 16°C absolute.</p>
+            {% if is_market_treatment %}
+                <p class="alert alert-info"><strong>Note for Agents:</strong> While you only control your own capital, aggregate environmental effects (total emissions and temperature) evolve adding up the individual emissions of the 5 agents in your economy.</p>
+            {% endif %}
+            
+            <p class="alert alert-info"><strong>💡 Interact with the controls below to see how capital choices affect emissions, temperature, and production in real-time.</strong></p>
+            
+            <!-- Inverted L Layout: Northwest, Northeast, Southwest, Southeast -->
+            <div class="row mb-3">
+                <!-- Northwest: Emissions -->
+                <div class="col-md-6">
+                    <div class="card bg-light h-100">
+                        <div class="card-body">
+                            <h6 class="card-title text-center">Step 1: Emissions from Capital</h6>
+                            <div id="emissionsChart3D" style="width:100%; height:350px;"></div>
+                            <div class="row mt-2">
+                                <div class="col-6">
+                                    <label for="env_k_slider" class="form-label small">Type-3 Capital (k₃) ($k_{3,t}$):</label>
+                                    <div class="input-group input-group-sm mb-2">
+                                        <input type="number" class="form-control" id="env_k_input" min="0.1" max="100" step="0.1" value="50">
+                                        <span class="input-group-text">units</span>
+                                    </div>
+                                    <input type="range" class="form-range form-range-sm" min="0.1" max="100" step="0.1" value="50" id="env_k_slider">
+                                </div>
+                                <div class="col-6">
+                                    <label for="env_th_slider" class="form-label small">Type-1 Capital (k₁) ($k_{1,t}$):</label>
+                                    <div class="input-group input-group-sm mb-2">
+                                        <input type="number" class="form-control" id="env_th_input" min="0.1" max="100" step="0.1" value="50">
+                                        <span class="input-group-text">units</span>
+                                    </div>
+                                    <input type="range" class="form-range form-range-sm" min="0.1" max="100" step="0.1" value="50" id="env_th_slider">
+                                </div>
+                            </div>
+                            <p class="mt-1 text-center mb-0"><strong>Emissions: <span id="env_e_val">0</span></strong></p>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Northeast: Temperature Change -->
+                <div class="col-md-6">
+                    <div class="card bg-light h-100">
+                        <div class="card-body">
+                            <h6 class="card-title text-center">Step 2: Temperature Change</h6>
+                            <div style="width: 100%; height: 350px;">
+                                <canvas id="tempChart"></canvas>
+                            </div>
+                            <p class="mt-2 text-center mb-0">
+                                <strong>Current Emissions: <span id="env_e_display">0</span></strong><br>
+                                <strong>Temperature Increase: <span id="env_dt_val">0</span>°C</strong>
+                            </p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="row">
+                <!-- Southwest: Damage to Production -->
+                <div class="col-md-6">
+                    <div class="card bg-light h-100">
+                        <div class="card-body">
+                            <h6 class="card-title text-center">Step 3: Damage to Production</h6>
+                            <div style="width: 100%; height: 350px;">
+                                <canvas id="damageChart"></canvas>
+                            </div>
+                            <p class="mt-2 text-center mb-0">
+                                <strong>Current Temp. Anomaly: <span id="env_temp_display">0.0</span>°C</strong><br>
+                                <small class="text-muted">(Absolute temp: <span id="env_temp_absolute">14.0</span>°C)</small><br>
+                                <strong>Production Factor (Ω): <span id="env_omega_val">1.000</span></strong>
+                            </p>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Southeast: Production Comparison -->
+                <div class="col-md-6">
+                    <div class="card bg-light h-100">
+                        <div class="card-body">
+                            <h6 class="card-title text-center">Production Impact in Next Period</h6>
+                            <div style="width: 100%; height: 350px;">
+                                <canvas id="productionComparisonChart"></canvas>
+                            </div>
+                            <p class="mt-2 text-center mb-0">
+                                <strong>Production at Natural Temp (Current): <span id="prod_natural">0</span></strong><br>
+                                <strong>Expected Production (Next Period): <span id="prod_actual">0</span></strong><br>
+                                <span class="text-danger"><strong>Estimated Output Loss from Temperature: <span id="prod_loss">0</span> (<span id="prod_loss_pct">0</span>%)</strong></span>
+                            </p>
+                            <p class="text-muted small text-center mb-0"><em>Red bar shows expected production loss in the next period due to temperature increase from current emissions.</em></p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="card border-secondary mt-4">
+                <div class="card-header">Mathematical Formulations</div>
+                <div class="card-body">
+                    <p>1. Emissions are defined as:</p>
+                    <div class="text-center" style="font-size: 18px; padding: 10px; background: white; border-radius: 5px; margin: 10px 0;">
+                        $$ e_t = k_{1,t} + 3 \cdot k_{3,t} $$
+                    </div>
+                    <p class="text-muted"><small>,and Type-3 capital produces 3 times as much emissions as Type-1 capital.</small></p>
+                    
+                    <p>2. The temperature anomaly in the next period ($T_{t+1}$) increases with new emissions and slowly reverts to zero (the natural baseline):</p>
+                    <div class="text-center" style="font-size: 18px; padding: 10px; background: white; border-radius: 5px; margin: 10px 0;">
+                        $$ T_{t+1} = 0.95 \cdot T_t + 0.0035 \cdot e_t $$
+                    </div>
+                    <p class="text-muted"><small>$T_t$ represents the temperature deviation from 14°C (pre-industrial baseline).</small></p>
+                    
+                    <p>3. This temperature affects production through the damage factor ($\Omega_t$). A higher temperature leads to a lower damage factor:</p>
+                    <div class="text-center" style="font-size: 18px; padding: 10px; background: white; border-radius: 5px; margin: 10px 0;">
+                        $$ \Omega_t = \frac{1}{1 + 0.05 \cdot T_t^2} $$
+                    </div>
+                    <p class="text-muted"><small>where $\pi_1 = 0.0$ and $\pi_2 = 0.05$.</small></p>
+                </div>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+
+    <!-- Section 8: Period Flow -->
+    <div class="card mb-4">
+        <div class="card-header"><h4>How Each Period Works</h4></div>
+        <div class="card-body">
+            <p><strong>Initial Capital:</strong> In period 1 of this economy, you will start with a pre-determined amount of type-3 $k_3$ and Type-1 capital $k_1$.</p>
+            
+            <p><strong>Production:</strong> At the beginning of each period, all your capital will automatically be used in production to create output.</p>
+            
+            <p><strong>Your Decision:</strong> You must decide how to allocate your output into:</p>
+            <ol>
+                <li>Consumption in this period</li>
+                <li>New investment in Type-3 capital ($k_3$)</li>
+                <li>New investment in Type-1 capital ($k_1$)</li>
+            </ol>
+            <p class="alert alert-warning"><strong>All three must add up to equal your total output.</strong></p>
+            
+            <p><strong>Capital Depreciation:</strong> During production, your capital (both type-3 and type-1) endures <strong>10% depreciation</strong> each period. That is, 10% of each capital type will be eliminated in production, and the remaining 90% will be available for the next period's production, plus any new investments you made.</p>
+            
+            <p><strong>Infinite Horizon:</strong> The experiment has an uncertain end date. After each period, there is a 93% chance it continues and a 7% chance it ends. This continues until the random termination occurs. </p>
+            
+            {% if is_market_treatment %}
+            <p><strong>Capital Markets:</strong> Before making your consumption and investment decisions each period, you will participate in capital markets where you can buy or sell both type-3 and Type-1 capital (k₁) with the other 4 participants in your economy. Any capital you buy in a period a given period enters production in the </strong>following</strong> period (that is, you will see the new capital amount updated in the following period)</p>
+            {% endif %}
+            
+            <h5 class="mt-4 mb-3">Period Structure Overview</h5>
+            
+            {% if is_market_treatment %}
+            <!-- Market Timeline -->
+            <div class="period-timeline">
+                <div class="timeline-line-instr"></div>
+                <div class="timeline-steps-instr">
+                    <div class="step-instr">
+                        <div class="step-circle-instr">1</div>
+                        <div class="step-label-instr">Production</div>
+                        <div class="step-description-instr">The capital levels <span class="math-instr">k<span class="subscript-instr">3,t</span></span> and <span class="math-instr">k<span class="subscript-instr">1,t</span></span> you carried on from last period automatically produce your individual output <span class="math-instr">y<span class="subscript-instr">t</span></span></div>
+                    </div>
+                    
+                    <div class="step-instr step-market-instr">
+                        <div class="step-circle-instr step-circle-market-instr">2</div>
+                        <div class="step-label-instr">Capital Markets</div>
+                        <div class="step-description-instr">Trade BOTH type-3 (<span class="math-instr">k<span class="subscript-instr">3</span></span>) and type-1 (<span class="math-instr">k<span class="subscript-instr">1</span></span>) capital with other agents<br>(4 minutes)</div>
+                    </div>
+                    
+                    <div class="step-instr">
+                        <div class="step-circle-instr">3</div>
+                        <div class="step-label-instr">Allocation Decision</div>
+                        <div class="step-description-instr">Allocate your post-trade output <span class="math-instr">y<span class="subscript-instr">t</span></span>:<br>
+                        • Consumption <span class="math-instr">c<span class="subscript-instr">t</span></span><br>
+                        • Type-3 investment <span class="math-instr">i<span class="subscript-instr">3,t</span></span><br>
+                        • Type-1 investment <span class="math-instr">i<span class="subscript-instr">1,t</span></span></div>
+                    </div>
+                    
+                    <div class="step-instr">
+                        <div class="step-circle-instr">4</div>
+                        <div class="step-label-instr">Capital Update</div>
+                        <div class="step-description-instr">Investments are added:<br>
+                        <span class="math-instr">k<span class="subscript-instr">3,t+1</span></span> and <span class="math-instr">k<span class="subscript-instr">1,t+1</span></span> ready for next period</div>
+                    </div>
+                    
+                    <div class="step-instr">
+                        <div class="step-circle-instr">5</div>
+                        <div class="step-label-instr">Environment Update</div>
+                        <div class="step-description-instr">Today's production from all 5 agents generates aggregate emissions <span class="math-instr">e<span class="subscript-instr">t</span></span>{% if not is_baseline %}, which affect economy-wide temperature tomorrow:<br>
+                        <span class="math-instr">T<span class="subscript-instr">t+1</span></span> impacts everyone's future production{% endif %}</div>
+                    </div>
+                </div>
+            </div>
+            {% else %}
+            <!-- Social Planner Timeline -->
+            <div class="period-timeline">
+                <div class="timeline-line-instr"></div>
+                <div class="timeline-steps-instr">
+                    <div class="step-instr">
+                        <div class="step-circle-instr">1</div>
+                        <div class="step-label-instr">Production</div>
+                        <div class="step-description-instr">The capital levels <span class="math-instr">k<span class="subscript-instr">3,t</span></span> and <span class="math-instr">k<span class="subscript-instr">1,t</span></span> you carried on from last period automatically produce output <span class="math-instr">y<span class="subscript-instr">t</span></span></div>
+                    </div>
+                    
+                    <div class="step-instr">
+                        <div class="step-circle-instr">2</div>
+                        <div class="step-label-instr">Allocation Decision</div>
+                        <div class="step-description-instr">Decide how to allocate output <span class="math-instr">y<span class="subscript-instr">t</span></span>:<br>
+                        • Consumption <span class="math-instr">c<span class="subscript-instr">t</span></span><br>
+                        • Type-3 investment <span class="math-instr">i<span class="subscript-instr">3,t</span></span><br>
+                        • Type-1 investment <span class="math-instr">i<span class="subscript-instr">1,t</span></span></div>
+                    </div>
+                    
+                    <div class="step-instr">
+                        <div class="step-circle-instr">3</div>
+                        <div class="step-label-instr">Capital Update</div>
+                        <div class="step-description-instr">Capital depreciates (10%) and new investments are added:<br>
+                        <span class="math-instr">k<span class="subscript-instr">3,t+1</span></span> and <span class="math-instr">k<span class="subscript-instr">1,t+1</span></span> ready for next period</div>
+                    </div>
+                    
+                    <div class="step-instr">
+                        <div class="step-circle-instr">4</div>
+                        <div class="step-label-instr">Environment Update</div>
+                        <<div class="step-description-instr">Today's production <span class="math-instr">y<span class="subscript-instr">t</span></span> generates emissions <span class="math-instr">e<span class="subscript-instr">t</span></span>{% if not is_baseline %}, which affect temperature tomorrow:<br>
+                        <span class="math-instr">T<span class="subscript-instr">t+1</span></span> impacts future production{% endif %}</div>
+                    </div>
+                </div>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+
+    <div class="text-center mt-4">
+        {{ next_button }}
+    </div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const graphData = {{ graph_data|safe }};
+    const C = {{ C_js|safe }};
+    const EXCHANGE_RATE = {{ payoff_conversion_rate }};
+
+    // --- Graph 1: Earnings (FIXED RED DOT) ---
+    const g1_c_slider = document.getElementById('g1_c_slider');
+    const g1_c_val = document.getElementById('g1_c_val');
+    const g1_u_val = document.getElementById('g1_u_val');
+    const utilityChartCtx = document.getElementById('utilityChart').getContext('2d');
+    const utilityChart = new Chart(utilityChartCtx, {
+        type: 'line',
+        data: { 
+            datasets: [
+                { 
+                    label: 'Earnings u(c)', 
+                    data: graphData.utility.c.map((c, i) => ({x: c, y: EXCHANGE_RATE * graphData.utility.u[i]})), 
+                    borderColor: 'rgb(75, 192, 192)', 
+                    tension: 0.1, 
+                    pointRadius: 0 
+                },
+                { 
+                    type: 'scatter', 
+                    label: 'Your Choice', 
+                    data: [], 
+                    backgroundColor: 'red', 
+                    pointRadius: 6, 
+                    pointHoverRadius: 8 
+                }
+            ] 
+        },
+        options: { 
+            scales: { 
+                x: { 
+                    type: 'linear', 
+                    title: { display: true, text: 'Consumption (c)' } 
+                }, 
+                y: { 
+                    title: { display: true, text: 'Utility (u)' } 
+                } 
+            } 
+        }
+    });
+    
+    function updateG1() {
+        const c = parseFloat(g1_c_slider.value);
+        g1_c_val.textContent = c.toFixed(1);
+        const u = EXCHANGE_RATE * Math.sqrt(c);  // Use the exchange rate
+        g1_u_val.textContent = u.toFixed(2);
+        
+        // Update the red dot to be exactly on the curve
+        utilityChart.data.datasets[1].data = [{x: c, y: u}];
+        utilityChart.update('none');
+    }
+    
+    g1_c_slider.addEventListener('input', updateG1);
+    updateG1();
+
+    // --- Graph 2: Production ---
+    const g2_k_slider = document.getElementById('g2_k_slider');
+    const g2_th_slider = document.getElementById('g2_th_slider');
+    const g2_k_val = document.getElementById('g2_k_val');
+    const g2_th_val = document.getElementById('g2_th_val');
+    const g2_y_val = document.getElementById('g2_y_val');
+    
+    const k_range = Array.from({length: 30}, (_, i) => i * 20/29);
+    const th_range = Array.from({length: 30}, (_, i) => i * 20/29);
+    const k_grid_new = [];
+    const th_grid_new = [];
+    const y_grid_new = [];
+    
+    for (let i = 0; i < th_range.length; i++) {
+        const k_row = [];
+        const th_row = [];
+        const y_row = [];
+        for (let j = 0; j < k_range.length; j++) {
+            k_row.push(k_range[j]);
+            th_row.push(th_range[i]);
+            y_row.push(C.TFP * Math.pow(th_range[i], C.UPSILON) * Math.pow(k_range[j], C.ALPHA));
+        }
+        k_grid_new.push(k_row);
+        th_grid_new.push(th_row);
+        y_grid_new.push(y_row);
+    }
+    
+    const productionPlotData = [
+        { 
+            x: k_grid_new, 
+            y: th_grid_new, 
+            z: y_grid_new, 
+            type: 'surface', 
+            opacity: 0.8, 
+            showscale: false, 
+            contours: {
+                x:{show:true,color:'rgba(0,0,0,0.2)'}, 
+                y:{show:true,color:'rgba(0,0,0,0.2)'}
+            } 
+        }, 
+        { 
+            x: [50], 
+            y: [50], 
+            z: [C.TFP * Math.pow(50, C.UPSILON) * Math.pow(50, C.ALPHA)], 
+            mode: 'markers', 
+            type: 'scatter3d', 
+            marker: { color: 'red', size: 5, symbol: 'diamond' }
+        }
+    ];
+    
+    const productionLayout = { 
+        title: '', 
+        scene: { 
+            xaxis: {title: 'k_3'}, 
+            yaxis: {title: 'k_1'}, 
+            zaxis: {title: 'y'},
+            camera: {
+                eye: {x: -1.5, y: -1.5, z: 1.3}
+            }
+        }, 
+        height: 400, 
+        margin: {l: 0, r: 0, t: 0, b: 0} 
+    };
+    
+    Plotly.newPlot('productionChart3D', productionPlotData, productionLayout, {displayModeBar: false});
+    
+    function updateG2() {
+        const k = parseFloat(g2_k_slider.value);
+        const th = parseFloat(g2_th_slider.value);
+        g2_k_val.textContent = k.toFixed(1);
+        g2_th_val.textContent = th.toFixed(1);
+        const y = C.TFP * Math.pow(th, C.UPSILON) * Math.pow(k, C.ALPHA);
+        g2_y_val.textContent = y.toFixed(2);
+        
+        // Update the red dot
+        productionPlotData[1].x = [k];
+        productionPlotData[1].y = [th];
+        productionPlotData[1].z = [y];
+        Plotly.react('productionChart3D', productionPlotData, productionLayout, {displayModeBar: false});
+    }
+    
+    g2_k_slider.addEventListener('input', updateG2);
+    g2_th_slider.addEventListener('input', updateG2);
+    updateG2();
+    
+    // --- Capital Depreciation Cascade ---
+    const deprecCapitalType = document.getElementById('deprec_capital_type');
+    const deprecAmount = document.getElementById('deprec_amount');
+    const deprecCascade = document.getElementById('depreciation_cascade');
+    const DELTA = 0.10;  // 10% depreciation rate
+    const NUM_PERIODS = 5;
+    
+    function updateDepreciationCascade() {
+        const initialAmount = parseFloat(deprecAmount.value) || 100;
+        const capitalType = deprecCapitalType.value;
+        const color = capitalType === 'brown' ? '#323232' : '#969696';
+        
+        let html = `
+            <div class="cascade-period">
+                <div class="cascade-box cascade-start">
+                    <div class="cascade-label">Period t</div>
+                    <div class="cascade-value">${initialAmount.toFixed(2)} units</div>
+                </div>
+        `;
+        
+        let currentAmount = initialAmount;
+        
+        for (let p = 1; p <= NUM_PERIODS; p++) {
+            const loss = currentAmount * DELTA;
+            const surviving = currentAmount * (1 - DELTA);
+            
+            html += `
+                <div class="cascade-split">
+                    <div class="cascade-arrow">↓</div>
+                    <div class="cascade-details">
+                        <span class="cascade-loss">10% loss: -${loss.toFixed(2)}</span>
+                        <span class="cascade-survive">90% remains: ${surviving.toFixed(2)}</span>
+                    </div>
+                </div>
+                <div class="cascade-box">
+                    <div class="cascade-label">Period t+${p}</div>
+                    <div class="cascade-value" style="color: ${color};">${surviving.toFixed(2)} units</div>
+                </div>
+            `;
+            
+            currentAmount = surviving;
+        }
+        
+        html += `
+                <div class="cascade-continue">
+                    <small class="text-muted">... and so on</small>
+                </div>
+            </div>
+        `;
+        
+        deprecCascade.innerHTML = html;
+    }
+    
+    deprecCapitalType.addEventListener('change', updateDepreciationCascade);
+    deprecAmount.addEventListener('input', updateDepreciationCascade);
+    updateDepreciationCascade();
+
+    {% if not is_baseline %}
+    // --- Environmental System Graphs ---
+    // Synchronize sliders with inputs
+    const envKSlider = document.getElementById('env_k_slider');
+    const envKInput = document.getElementById('env_k_input');
+    const envThSlider = document.getElementById('env_th_slider');
+    const envThInput = document.getElementById('env_th_input');
+    
+    function syncSliderInput(slider, input) {
+        slider.addEventListener('input', function() {
+            input.value = parseFloat(slider.value).toFixed(1);
+            updateEnvironmentalGraphs();
+        });
+        input.addEventListener('input', function() {
+            let val = parseFloat(input.value);
+            if (!isNaN(val)) {
+                val = Math.max(parseFloat(slider.min), Math.min(parseFloat(slider.max), val));
+                slider.value = val;
+                input.value = val.toFixed(1);
+                updateEnvironmentalGraphs();
+            }
+        });
+    }
+    
+    syncSliderInput(envKSlider, envKInput);
+    syncSliderInput(envThSlider, envThInput);
+    
+    // Store current temperature for damage calculation
+    let currentTemp = {{ initial_temperature }};
+    
+    // Create 3D Emissions Chart
+    const k_range_env = Array.from({length: 30}, (_, i) => i * 100/29);
+    const th_range_env = Array.from({length: 30}, (_, i) => i * 100/29);
+    const k_grid_env = [];
+    const th_grid_env = [];
+    const e_grid_env = [];
+    
+    for (let i = 0; i < th_range_env.length; i++) {
+        const k_row = [];
+        const th_row = [];
+        const e_row = [];
+        for (let j = 0; j < k_range_env.length; j++) {
+            k_row.push(k_range_env[j]);
+            th_row.push(th_range_env[i]);
+            const k_3 = k_range_env[j];
+            const k_1 = th_range_env[i] || 0.1;
+            const e_val = C.S * (k_1 + 3 * k_3);
+            e_row.push(e_val);
+        }
+        k_grid_env.push(k_row);
+        th_grid_env.push(th_row);
+        e_grid_env.push(e_row);
+    }
+    
+    const emissionsPlotData = [
+        { 
+            x: k_grid_env, 
+            y: th_grid_env, 
+            z: e_grid_env, 
+            type: 'surface', 
+            opacity: 0.8, 
+            showscale: false,
+            colorscale: 'Reds',
+            contours: {
+                x:{show:true,color:'rgba(0,0,0,0.2)'}, 
+                y:{show:true,color:'rgba(0,0,0,0.2)'}
+            } 
+        }, 
+        { 
+            x: [20], 
+            y: [20], 
+            z: [C.S * (10 + 3 * 10)],  // NEW FORMULA: e = s × (k_1 + 3×k_3) 
+            mode: 'markers', 
+            type: 'scatter3d', 
+            marker: { color: 'red', size: 5, symbol: 'diamond' }
+        }
+    ];
+    
+    const emissionsLayout = { 
+        title: '', 
+        scene: { 
+            xaxis: {title: 'k_3'}, 
+            yaxis: {title: 'k_1'}, 
+            zaxis: {title: 'Emissions'},
+            camera: {
+                eye: {x: -1.5, y: -1.5, z: 0.6}
+            }
+        }, 
+        height: 350, 
+        margin: {l: 0, r: 0, t: 0, b: 0} 
+    };
+    
+    Plotly.newPlot('emissionsChart3D', emissionsPlotData, emissionsLayout, {displayModeBar: false});
+    
+    // Temperature Change Chart
+    const tempChartCtx = document.getElementById('tempChart').getContext('2d');
+    const e_vals_temp = Array.from({length: 100}, (_, i) => i * 5/99);
+    const dt_vals = e_vals_temp.map(e => C.XI * e);
+    
+    const tempChart = new Chart(tempChartCtx, {
+        type: 'line',
+        data: {
+            datasets: [
+                {
+                    label: 'ΔT = ξ × e',
+                    data: e_vals_temp.map((e, i) => ({x: e, y: dt_vals[i]})),
+                    borderColor: 'rgb(255, 99, 132)',
+                    tension: 0.1,
+                    pointRadius: 0
+                },
+                {
+                    type: 'scatter',
+                    label: 'Current Point',
+                    data: [],
+                    backgroundColor: 'red',
+                    pointRadius: 6,
+                    pointHoverRadius: 8
+                }
+            ]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            scales: {
+                x: {
+                    type: 'linear',
+                    title: { display: true, text: 'Emissions (e)' },
+                    min: 0,
+                    max: 5
+                },
+                y: {
+                    title: { display: true, text: 'Temp Increase (ΔT)' },
+                    beginAtZero: true
+                }
+            }
+        }
+    });
+    
+    // Damage Chart
+    const damageChartCtx = document.getElementById('damageChart').getContext('2d');
+    const t_vals = Array.from({length: 100}, (_, i) => i * 5/99); // Changed from 30 to 5
+    const omega_vals = t_vals.map(t => 1 / (1 + C.PI_1 * t + C.PI_2 * Math.pow(t, 2)));
+    
+    const damageChart = new Chart(damageChartCtx, {
+        type: 'line',
+        data: {
+            datasets: [
+                {
+                    label: 'Ω(T)',
+                    data: t_vals.map((t, i) => ({x: t, y: omega_vals[i]})),
+                    borderColor: 'rgb(255, 159, 64)',
+                    tension: 0.1,
+                    pointRadius: 0
+                },
+                {
+                    type: 'scatter',
+                    label: 'Current Temp',
+                    data: [],
+                    backgroundColor: 'red',
+                    pointRadius: 6,
+                    pointHoverRadius: 8
+                }
+            ]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            scales: {
+                x: {
+                    type: 'linear',
+                    title: { display: true, text: 'Temperature Anomaly (°C)' },
+                    min: 0,
+                    max: 5  // Zoom in to 0-5°C range
+                },
+                y: {
+                    title: { display: true, text: 'Production Factor (Ω)' },
+                    min: 0,
+                    max: 1
+                }
+            }
+        }
+    });
+    
+    // Production Comparison Chart
+    const prodCompChartCtx = document.getElementById('productionComparisonChart').getContext('2d');
+    const prodCompChart = new Chart(prodCompChartCtx, {
+        type: 'bar',
+        data: {
+            labels: ['At Natural Temp', 'With Temp Impact'],
+            datasets: [{
+                label: 'Production',
+                data: [0, 0],
+                backgroundColor: ['rgba(75, 192, 192, 0.6)', 'rgba(255, 99, 132, 0.6)'],
+                borderColor: ['rgb(75, 192, 192)', 'rgb(255, 99, 132)'],
+                borderWidth: 2
+            }]
+        },
+        options: {
+            scales: {
+                y: {
+                    beginAtZero: true,
+                    title: { display: true, text: 'Production' }
+                }
+            }
+        }
+    });
+    
+    function updateEnvironmentalGraphs() {
+        const k = parseFloat(envKSlider.value);
+        const th = parseFloat(envThSlider.value);
+        
+        // Calculate emissions using NEW FORMULA: e = s × (k_1 + m × k_3)
+        // where k_3 = k, k_1 = th, m = 3, s = C.S
+        const k_3 = k;
+        const k_1 = th || 0.1;
+        const e = C.S * (k_1 + 3 * k_3);
+        
+        // Update emissions display and 3D plot
+        document.getElementById('env_e_val').textContent = e.toFixed(2);
+        document.getElementById('env_e_display').textContent = e.toFixed(2);
+        emissionsPlotData[1].x = [k];
+        emissionsPlotData[1].y = [th];
+        emissionsPlotData[1].z = [e];
+        Plotly.react('emissionsChart3D', emissionsPlotData, emissionsLayout, {displayModeBar: false});
+        
+        // Calculate temperature change
+        const dt = C.XI * e;
+        const nextTemp = (1 - C.ZETA) * currentTemp + dt;
+        document.getElementById('env_dt_val').textContent = dt.toFixed(4);
+        
+        // Update temperature chart
+        // Dynamically adjust x-axis range to show the current emissions
+        const maxEmissions = Math.max(5, e * 1.2); // Show at least to 5, or 120% of current emissions
+        tempChart.options.scales.x.max = maxEmissions;
+        
+        // Regenerate the line data to cover the new range
+        const new_e_vals = Array.from({length: 100}, (_, i) => i * maxEmissions/99);
+        const new_dt_vals = new_e_vals.map(e_val => C.XI * e_val);
+        tempChart.data.datasets[0].data = new_e_vals.map((e_val, i) => ({x: e_val, y: new_dt_vals[i]}));
+        
+        tempChart.data.datasets[1].data = [{x: e, y: dt}];
+        tempChart.update('none');
+        
+        // Calculate damage factor at next temperature
+        const omega_next = 1 / (1 + C.PI_1 * nextTemp + C.PI_2 * Math.pow(nextTemp, 2));
+        document.getElementById('env_temp_display').textContent = nextTemp.toFixed(2);
+        document.getElementById('env_temp_absolute').textContent = (14 + nextTemp).toFixed(2);
+        document.getElementById('env_omega_val').textContent = omega_next.toFixed(3);
+        
+        // Update damage chart
+        // Dynamically adjust x-axis range if temperature goes beyond 5°C
+        const maxTemp = Math.max(5, nextTemp * 1.2); // Show at least to 5°C, or 120% of current temp
+        damageChart.options.scales.x.max = maxTemp;
+        
+        // Regenerate the line data to cover the new range
+        const new_t_vals = Array.from({length: 100}, (_, i) => i * maxTemp/99);
+        const new_omega_vals = new_t_vals.map(t => 1 / (1 + C.PI_1 * t + C.PI_2 * Math.pow(t, 2)));
+        damageChart.data.datasets[0].data = new_t_vals.map((t, i) => ({x: t, y: new_omega_vals[i]}));
+        
+        damageChart.data.datasets[1].data = [{x: nextTemp, y: omega_next}];
+        damageChart.update('none');
+        
+        // Calculate production comparison
+        const prod_natural = C.TFP * Math.pow(th, C.UPSILON) * Math.pow(k, C.ALPHA);
+        const prod_actual = C.TFP * omega_next * Math.pow(th, C.UPSILON) * Math.pow(k, C.ALPHA);
+        const prod_loss = prod_natural - prod_actual;
+        const prod_loss_pct = (prod_loss / prod_natural * 100);
+        
+        document.getElementById('prod_natural').textContent = prod_natural.toFixed(2);
+        document.getElementById('prod_actual').textContent = prod_actual.toFixed(2);
+        document.getElementById('prod_loss').textContent = prod_loss.toFixed(2);
+        document.getElementById('prod_loss_pct').textContent = prod_loss_pct.toFixed(1);
+        
+        prodCompChart.data.datasets[0].data = [prod_natural, prod_actual];
+        prodCompChart.update('none');
+    }
+    
+    updateEnvironmentalGraphs();
+    {% endif %}
+});
+</script>
+
+<style>
+.depreciation-cascade {
+    display: flex;
+    justify-content: center;
+    padding: 20px;
+    min-height: 300px;
+}
+
+.cascade-period {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    width: 100%;
+    max-width: 400px;
+}
+
+.cascade-box {
+    background: #e3f2fd;
+    border: 2px solid #2196f3;
+    border-radius: 8px;
+    padding: 12px 20px;
+    text-align: center;
+    width: 100%;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
+
+.cascade-box.cascade-start {
+    background: #c8e6c9;
+    border-color: #4caf50;
+}
+
+.cascade-label {
+    font-weight: bold;
+    font-size: 14px;
+    color: #333;
+    margin-bottom: 5px;
+}
+
+.cascade-value {
+    font-size: 18px;
+    font-weight: bold;
+    color: #1565c0;
+}
+
+.cascade-split {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 5px;
+    margin: 5px 0;
+}
+
+.cascade-arrow {
+    font-size: 24px;
+    color: #666;
+    font-weight: bold;
+}
+
+.cascade-details {
+    display: flex;
+    flex-direction: column;
+    gap: 3px;
+    font-size: 13px;
+    text-align: center;
+}
+
+.cascade-loss {
+    color: #d32f2f;
+    font-weight: 600;
+}
+
+.cascade-survive {
+    color: #388e3c;
+    font-weight: 600;
+}
+
+.cascade-continue {
+    margin-top: 10px;
+    opacity: 0.6;
+}
+
+/* Timeline Styles */
+.period-timeline {
+    position: relative;
+    padding: 40px 20px;
+    margin: 30px 0;
+}
+
+.timeline-line-instr {
+    position: absolute;
+    top: 70px;
+    left: 10%;
+    right: 10%;
+    height: 3px;
+    background: linear-gradient(to right, #007bff, #28a745);
+    z-index: 1;
+}
+
+.timeline-steps-instr {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    position: relative;
+    z-index: 2;
+}
+
+.step-instr {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+    padding: 0 10px;
+}
+
+.step-circle-instr {
+    width: 60px;
+    height: 60px;
+    border-radius: 50%;
+    background: #007bff;
+    color: white;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 24px;
+    font-weight: bold;
+    margin-bottom: 15px;
+    box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+    border: 4px solid white;
+}
+
+.step-circle-market-instr {
+    background: #17a2b8;
+    animation: pulse 2s infinite;
+}
+
+@keyframes pulse {
+    0%, 100% { box-shadow: 0 4px 8px rgba(0,0,0,0.2); }
+    50% { box-shadow: 0 4px 16px rgba(23, 162, 184, 0.6); }
+}
+
+.step-label-instr {
+    font-weight: bold;
+    font-size: 16px;
+    color: #333;
+    margin-bottom: 10px;
+    min-height: 40px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.step-description-instr {
+    font-size: 13px;
+    color: #666;
+    line-height: 1.5;
+    max-width: 220px;
+}
+
+.math-instr {
+    font-family: 'Times New Roman', serif;
+    font-style: italic;
+}
+
+.subscript-instr {
+    font-size: 0.8em;
+    vertical-align: sub;
+}
+
+.step-market-instr {
+    background: rgba(23, 162, 184, 0.05);
+    border-radius: 10px;
+    padding: 10px;
+    margin: -10px;
+}
+
+/* Responsive adjustments */
+@media (max-width: 992px) {
+    .timeline-line-instr {
+        display: none;
+    }
+    
+    .timeline-steps-instr {
+        flex-direction: column;
+        gap: 30px;
+    }
+    
+    .step-instr {
+        flex-direction: row;
+        text-align: left;
+        max-width: 100%;
+    }
+    
+    .step-circle-instr {
+        flex-shrink: 0;
+        margin-right: 20px;
+        margin-bottom: 0;
+    }
+    
+    .step-label-instr,
+    .step-description-instr {
+        text-align: left;
+        max-width: none;
+    }
+}
+</style>
+{{ endblock }}

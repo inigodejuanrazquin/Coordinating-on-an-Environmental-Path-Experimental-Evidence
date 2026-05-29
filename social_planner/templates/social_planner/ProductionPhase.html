@@ -1,0 +1,236 @@
+{{ block title }}
+    {% if is_market %}
+        Period {{ period_number }} - Start of Period (Agent {{ agent_type }})
+    {% else %}
+        Period {{ period_number }} - Start of Period
+    {% endif %}
+{{ endblock }}
+
+{{ block content }}
+<div class="container mt-4">
+    <div class="row">
+        <div class="col-md-12">
+            <h2 class="text-center mb-4">
+                Period {{ period_number }} Has Begun
+                {% if is_market %}<br><small class="text-muted">Agent {{ agent_type }}</small>{% endif %}
+            </h2>
+        </div>
+    </div>
+
+    {% if period_number > 1 %}
+    <div class="row mb-4">
+        <div class="col-md-12">
+            <div class="card">
+                <div class="card-header bg-secondary text-white"><h5>Results from Period {{ previous_period_number }}</h5></div>
+                <div class="card-body text-center">
+                    <div class="row">
+                        <div class="col"><p><strong>Consumption:</strong> {{ prev_results.consumption }}</p></div>
+                        <div class="col"><p><strong>Type-3 Investment:</strong> {{ prev_results.brown_investment }}</p></div>
+                        <div class="col"><p><strong>Type-1 Investment:</strong> {{ prev_results.green_investment }}</p></div>
+                        <div class="col"><p><strong>Period Payoff/Utility:</strong> {{ prev_results.period_utility }}</p></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+
+    <div class="row mb-4">
+        <div class="col-md-6"><div class="card"><div class="card-header">
+    {% if is_market %}
+        <h6>Capital Evolution (Pre- vs. Post-Trade)</h6>
+    {% else %}
+        <h6>Capital Evolution</h6>
+    {% endif %}
+</div><div class="card-body"><canvas id="capitalChart"></canvas></div></div></div>
+        <div class="col-md-6"><div class="card"><div class="card-header"><h6>Consumption & Payoff</h6></div><div class="card-body"><canvas id="consumptionChart"></canvas></div></div></div>
+    </div>
+    <div class="row mb-4">
+        <div class="col-md-6"><div class="card"><div class="card-header"><h6>Production Evolution</h6></div><div class="card-body"><canvas id="productionChart"></canvas></div></div></div>
+        <div class="col-md-6"><div class="card"><div class="card-header"><h6>Temperature Evolution</h6></div><div class="card-body"><canvas id="temperatureChart"></canvas></div></div></div>
+    </div>
+
+    <div class="row mb-4">
+        <div class="col-md-6">
+            <div class="card">
+                <div class="card-header bg-primary text-white">
+                    <h5>Current State (Start of Period {{ period_number }})</h5>
+                </div>
+                <div class="card-body">
+                    <p><strong>Type-3 Capital (k₃):</strong> {{ type3_capital_display }} units</p>
+                    <p><strong>Type-1 Capital (k₁):</strong> {{ type1_capital_display }} units</p>
+                    {% if not is_baseline %}<p><strong>Temperature:</strong> {{ temperature }}</p>{% endif %}
+                </div>
+            </div>
+        </div>
+        <div class="col-md-6">
+            <div class="card">
+                <div class="card-header bg-success text-white">
+                    <h5>Production This Period</h5>
+                </div>
+                <div class="card-body">
+                    <p><strong>Your Capital has Produced:</strong> {{ individual_output }} units of output</p>
+                    {% if is_market and not is_baseline %}<p><strong>Total Economy Emissions:</strong> {{ current_emissions }} units</p>{% endif %}
+                    {% if not is_market and not is_baseline %}<p><strong>Emissions:</strong> {{ current_emissions }} units</p>{% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row">
+        <div class="col-md-12 text-center">
+            <p class="lead">
+                {% if is_market %}
+                    You will now proceed to the capital markets.
+                {% else %}
+                    You will now decide how to allocate your output.
+                {% endif %}
+            </p>
+            {{ next_button }}
+        </div>
+    </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    try {
+        const historicalData = JSON.parse({{ historical_data|json }});
+        const isMarket = {{ is_market|json }};
+        const labels = historicalData.map(d => `P${d.period}`);
+        const historyPrev = historicalData.slice(0, -1);
+        const labelsPrev = labels.slice(0, -1);
+
+
+
+
+
+        // Capital Chart - 4 lines for DM, 2 for SP
+        if (isMarket) {
+            new Chart(document.getElementById('capitalChart'), {
+                type: 'line',
+                data: {
+                    labels: labels,
+                    datasets: [
+                        { 
+                            label: 'Type-3 Capital (k₃) (Pre-Trade)', 
+                            data: historicalData.map(d => d.brown_capital_pre),
+                            borderColor: 'rgba(50, 50, 50, 1)',
+                            borderDash: [5, 5],
+                            fill: false,
+                            pointRadius: 2
+                        },
+                        { 
+                            label: 'Type-3 Capital (k₃) (Post-Trade)', 
+                            data: historicalData.map(d => d.brown_capital_post),
+                            borderColor: 'rgba(50, 50, 50, 1)',
+                            fill: false,
+                            pointRadius: 2
+                        },
+                        { 
+                            label: 'Type-1 Capital (k₁) (Pre-Trade)', 
+                            data: historicalData.map(d => d.green_capital_pre),
+                            borderColor: 'rgba(150, 150, 150, 1)',
+                            borderDash: [5, 5],
+                            fill: false,
+                            pointRadius: 2
+                        },
+                        { 
+                            label: 'Type-1 Capital (k₁) (Post-Trade)', 
+                            data: historicalData.map(d => d.green_capital_post),
+                            borderColor: 'rgba(150, 150, 150, 1)',
+                            fill: false,
+                            pointRadius: 2
+                        }
+                    ]
+                }
+            });
+        } else {
+            // SP: Just 2 lines (no trading)
+            new Chart(document.getElementById('capitalChart'), {
+                type: 'line',
+                data: {
+                    labels: labels,
+                    datasets: [
+                        { 
+                            label: 'Type-3 Capital (k₃)', 
+                            data: historicalData.map(d => d.brown_capital_pre),
+                            borderColor: 'rgba(50, 50, 50, 1)',
+                            fill: false,
+                            pointRadius: 2
+                        },
+                        { 
+                            label: 'Type-1 Capital (k₁)', 
+                            data: historicalData.map(d => d.green_capital_pre),
+                            borderColor: 'rgba(150, 150, 150, 1)',
+                            fill: false,
+                            pointRadius: 2
+                        }
+                    ]
+                }
+            });
+        }
+        
+        // Consumption chart - SINGLE Y-AXIS
+        new Chart(document.getElementById('consumptionChart'), {
+            type: 'line',
+            data: {
+                labels: labelsPrev,
+                datasets: [
+                    { 
+                        label: 'Consumption (c)', 
+                        data: historyPrev.map(d => d.consumption), 
+                        borderColor: 'rgba(75, 192, 192, 1)', 
+                        fill: false 
+                    },
+                    { 
+                        label: 'Payoff/Utility (u)', 
+                        data: historyPrev.map(d => d.utility), 
+                        borderColor: 'rgba(153, 102, 255, 1)', 
+                        fill: false
+                    }
+                ]
+            },
+            options: { 
+                scales: { 
+                    y: { 
+                        beginAtZero: true 
+                    } 
+                } 
+            }
+        });
+        
+        // Production Chart - FIXED FOR SP (no before/after trade)
+        new Chart(document.getElementById('productionChart'), {
+            type: 'line',
+            data: {
+                labels: labels,
+                datasets: [
+                    { 
+                        label: 'Output', 
+                        data: historicalData.map(d => d.output_initial), 
+                        borderColor: 'rgba(54, 162, 235, 1)',
+                        fill: false 
+                    }
+                ]
+            },
+            options: { scales: { y: { beginAtZero: true } } }
+        });
+
+        new Chart(document.getElementById('temperatureChart'), {
+            type: 'line',
+            data: {
+                labels: labels,
+                datasets: [{ 
+                    label: 'Temperature (T)', 
+                    data: historicalData.map(d => d.temperature), 
+                    borderColor: 'rgba(255, 99, 132, 1)', 
+                    fill: false 
+                }]
+            }
+        });
+    } catch (e) { console.error('Chart error:', e); }
+});
+</script>
+
+{{ endblock }}

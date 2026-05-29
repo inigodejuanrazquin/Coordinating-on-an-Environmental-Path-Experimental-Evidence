@@ -1,0 +1,611 @@
+{{ block title }}
+    Period {{ period_number }} - {% if is_market %}Individual Allocation Decision (Agent {{ agent_type }}){% else %}Production and Allocation Decisions{% endif %}
+{{ endblock }}
+
+{{ block content }}
+<script src="https://polyfill.io/v3/polyfill.min.js?features=es6"></script>
+<script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+
+<div class="container mt-4">
+    <div class="row">
+        <div class="col-md-12">
+            <h2 class="text-center mb-4">
+                Period {{ period_number }} - Allocation Decision
+                {% if is_market %}<br><small class="text-muted">Agent {{ agent_type }}</small>{% endif %}
+            </h2>
+        </div>
+    </div>
+
+    <div class="row mb-4">
+        <div class="col-md-12">
+            <p class="text-center text-muted"><i>Review the history of the economy before making your final allocation decision for this period.</i></p>
+        </div>
+        <div class="col-md-6"><div class="card"><div class="card-header">
+    {% if is_market %}
+        <h6>Capital Evolution (Pre- vs. Post-Trade)</h6>
+    {% else %}
+        <h6>Capital Evolution</h6>
+    {% endif %}
+</div><div class="card-body"><canvas id="capitalChart"></canvas></div></div></div>
+        <div class="col-md-6"><div class="card"><div class="card-header"><h6>Consumption & Payoff</h6></div><div class="card-body"><canvas id="consumptionChart"></canvas></div></div></div>
+    </div>
+    <div class="row mb-4">
+        <div class="col-md-6"><div class="card"><div class="card-header"><h6>Production Evolution</h6></div><div class="card-body"><canvas id="productionChart"></canvas></div></div></div>
+        <div class="col-md-6"><div class="card"><div class="card-header"><h6>Temperature Evolution</h6></div><div class="card-body"><canvas id="temperatureChart"></canvas></div></div></div>
+    </div>
+
+    <div class="row mb-4">
+        <div class="col-md-12">
+            <div class="card border-secondary">
+                <div class="card-header bg-light text-dark">
+                    <h5><i class="fas fa-lightbulb"></i> Investment Effects Calculator (THIS IS THE MOST IMPORTANT INFORMATIONAL TOOL YOU HAVE!)</h5>
+                </div>
+                <div class="card-body" style="padding: 15px;">
+                    <div class="alert alert-info" style="font-size: 13px; padding: 8px; margin-bottom: 10px;">
+                        <strong>💡 Reminder:</strong> Capital depreciates each period.
+                        If you invest <strong>q3</strong> units in Type-3 capital (\(k_3\)), <strong>{{ brown_depreciation_pct }}%</strong> will depreciate,
+                        so <strong>{{ brown_survival_pct }}%</strong> ({{ brown_survival_rate }} × q3) will still be available for production in future periods.
+                        For Type-1 capital (\(k_1\)), <strong>{{ green_depreciation_pct }}%</strong> depreciates,
+                        leaving <strong>{{ green_survival_pct }}%</strong> ({{ green_survival_rate }} × q1) available for future production.
+                    </div>
+                    <div class="row mb-2">
+                        <div class="col-md-4">
+                            <label for="invest_type_select" class="form-label small"><strong>Investment Type:</strong></label>
+                            <select id="invest_type_select" class="form-select form-select-sm">
+                                <option value="brown">Type-3 Capital (\(k_3\)) (i_3,t)</option>
+                                <option value="green">Type-1 Capital (\(k_1\)) (i_1,t)</option>
+                            </select>
+                        </div>
+                        <div class="col-md-3">
+                            <label for="invest_amount_input" class="form-label small"><strong>Investment Amount:</strong></label>
+                            <div class="input-group input-group-sm">
+                                <input type="number" id="invest_amount_input" class="form-control" value="1" min="0" step="0.1">
+                                <span class="input-group-text">units</span>
+                            </div>
+                        </div>
+                        <div class="col-md-5">
+                            <label class="form-label small"><strong>Your Current State (Period t):</strong></label>
+                            <div class="text-muted small">
+                                \(k_{3,t}\) = {{ type3_capital_display }} | \(k_{1,t}\) = {{ type1_capital_display }} | \(T_t\) = {{ temperature }}
+                            </div>
+                        </div>
+                    </div>
+                    <div class="investment-flow-diagram" id="flow_diagram">
+                        </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="row">
+        <div class="col-md-12">
+            <div class="card">
+                <div class="card-header bg-warning text-dark">
+                    <h5>Your Allocation Decision</h5>
+                    <p class="mb-0">You must allocate your <strong>{{ current_output }} units</strong> of output completely.</p>
+                </div>
+                <div class="card-body">
+                    {% if is_market %}
+                        {{ formfield 'individual_consumption' }}
+                        {{ formfield 'individual_brown_investment' }}
+                        {{ formfield 'individual_green_investment' }}
+                    {% else %}
+                        {{ formfield 'consumption' }}
+                        {{ formfield 'brown_investment' }}
+                        {{ formfield 'green_investment' }}
+                    {% endif %}
+                    
+                    <div class="mt-3">
+                        <div class="alert alert-light">
+                            <div class="row">
+                                <div class="col-md-6">
+                                    <p><strong>Total Allocation:</strong> <span id="totalAllocation">0.00</span> units</p>
+                                    <p><strong>Available Output:</strong> {{ current_output }} units</p>
+                                </div>
+                                <div class="col-md-6">
+                                    <p><strong>Remaining:</strong> <span id="remaining">{{ current_output }}</span> units</p>
+                                    <p id="allocationStatus" class="mb-0"></p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="mt-3">
+                        <div class="row">
+                            <div class="mt-3">
+                        <div class="row">
+                            <div class="col-md-4"><p class="text-muted mb-0"><strong>Consumption:</strong> Gives you utility/payoff this period.</p></div>
+                            <div class="col-md-4"><p class="text-muted mb-0"><strong>Investment in type-3 capital \(k_3\):</strong> Produces 3 units of emissions per unit of \(k_3\).</p></div>
+                            <div class="col-md-4"><p class="text-muted mb-0"><strong>Investment in type-1 capital \(k_1\):</strong> Produces 1 unit of emissions per unit of \(k_1\).</p></div>
+                        </div>
+                    </div>
+
+                    <div class="row mt-3">
+                        <div class="col-md-12">
+                            <div class="alert alert-info">
+                                <h5 class="alert-heading" style="font-size: 1.1rem; margin-bottom: 0.25rem;"><i class="fas fa-calculator"></i> Remember Your Production Function</h5>
+                                <p class="mb-0" style="font-size: 1.25rem; text-align: center; font-weight: bold;">
+                                    \( y_{i,t} = {{ productivity }} \cdot \Omega_t \cdot k_{1,i,t}^{0.22} \cdot k_{3,i,t}^{0.33} \)
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row mt-4">
+        <div class="col-md-12 text-center">{{ next_button }}</div>
+    </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+<style>
+/* custom styles */
+canvas { max-height: 250px; }
+.investment-flow-diagram { padding: 15px 10px; background: #f8f9fa; border-radius: 8px; min-height: 250px; }
+.flow-container { display: flex; flex-direction: column; align-items: center; gap: 8px; }
+.flow-level { display: flex; align-items: center; justify-content: center; gap: 15px; width: 100%; }
+.flow-box { background: white; border: 2px solid #007bff; border-radius: 6px; padding: 10px 15px; min-width: 180px; max-width: 260px; text-align: center; box-shadow: 0 1px 3px rgba(0,0,0,0.1); }
+.flow-box.start { border-color: #6c757d; background: #e9ecef; font-weight: bold; }
+.flow-box.positive { border-color: #28a745; background: #d4edda; }
+.flow-box.negative { border-color: #dc3545; background: #f8d7da; }
+.flow-box.neutral { border-color: #ffc107; background: #fff3cd; }
+.flow-arrow { font-size: 20px; color: #6c757d; font-weight: bold; }
+.flow-label { font-size: 15px; font-weight: bold; color: #333; margin-bottom: 5px; }
+.flow-value { font-size: 18px; margin: 5px 0; color: #007bff; font-weight: bold; }
+.flow-change { font-size: 16px; font-weight: bold; margin-top: 4px; }
+.flow-change.up { color: #28a745; }
+.flow-change.down { color: #dc3545; }
+.flow-change.neutral { color: #856404; }
+.period-label { font-size: 13px; color: #495057; font-weight: 600; margin-top: 5px; padding: 3px 8px; background-color: rgba(108, 117, 125, 0.1); border-radius: 3px; display: inline-block; }
+.summary-box { margin-top: 10px; padding: 8px; font-size: 12px; border-radius: 4px; }
+.diagonal-split { display: flex; justify-content: space-around; align-items: flex-start; width: 100%; gap: 80px; position: relative; margin: 5px 0; }
+.branch-container { display: flex; flex-direction: column; align-items: center; gap: 8px; }
+.branch-container.right-branch { gap: 2px; }
+.diagonal-arrow { font-size: 40px; color: #6c757d; position: relative; line-height: 1; }
+.arrow-label { font-size: 11px; color: #495057; font-weight: 600; margin-top: 2px; text-align: center; }
+.net-effect-number { display: inline; }
+.net-effect-number.positive { color: #28a745; }
+.net-effect-number.negative { color: #dc3545; }
+.net-effect-number.neutral { color: #856404; }
+
+/* Central branch for depreciation cascade */
+.branch-container.center-branch { gap: 3px; }
+.cascade-box-flow { background: #e3f2fd; border: 2px solid #2196f3; border-radius: 6px; padding: 8px 12px; min-width: 160px; text-align: center; }
+.cascade-detail { font-size: 11px; color: #666; margin-top: 2px; }
+
+/* Larger subscripts for time periods */
+.flow-label sub, .flow-change sub, .period-label sub { font-size: 0.85em; }
+</style>
+
+
+
+
+
+
+
+
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    try {
+        const historicalData = JSON.parse({{ historical_data|json }});
+        const isMarket = {{ is_market|json }};
+        const labels = historicalData.map(d => `P${d.period}`);
+
+
+
+
+        // Capital Chart - 4 lines for DM, 2 for SP
+        if (isMarket) {
+            new Chart(document.getElementById('capitalChart'), {
+                type: 'line',
+                data: {
+                    labels: labels,
+                    datasets: [
+                        { 
+                            label: 'Type-3 Capital (k₃) (Pre-Trade)', 
+                            data: historicalData.map(d => d.brown_capital_pre),
+                            borderColor: 'rgba(50, 50, 50, 1)',
+                            borderDash: [5, 5],
+                            fill: false,
+                            pointRadius: 2
+                        },
+                        { 
+                            label: 'Type-3 Capital (k₃) (Post-Trade)', 
+                            data: historicalData.map(d => d.brown_capital_post),
+                            borderColor: 'rgba(50, 50, 50, 1)',
+                            fill: false,
+                            pointRadius: 2
+                        },
+                        { 
+                            label: 'Type-1 Capital (k₁) (Pre-Trade)', 
+                            data: historicalData.map(d => d.green_capital_pre),
+                            borderColor: 'rgba(150, 150, 150, 1)',
+                            borderDash: [5, 5],
+                            fill: false,
+                            pointRadius: 2
+                        },
+                        { 
+                            label: 'Type-1 Capital (k₁) (Post-Trade)', 
+                            data: historicalData.map(d => d.green_capital_post),
+                            borderColor: 'rgba(150, 150, 150, 1)',
+                            fill: false,
+                            pointRadius: 2
+                        }
+                    ]
+                }
+            });
+        } else {
+            // SP: Just 2 lines (no trading)
+            new Chart(document.getElementById('capitalChart'), {
+                type: 'line',
+                data: {
+                    labels: labels,
+                    datasets: [
+                        { 
+                            label: 'Type-3 Capital (k₃)', 
+                            data: historicalData.map(d => d.brown_capital_pre),
+                            borderColor: 'rgba(50, 50, 50, 1)',
+                            fill: false,
+                            pointRadius: 2
+                        },
+                        { 
+                            label: 'Type-1 Capital (k₁)', 
+                            data: historicalData.map(d => d.green_capital_pre),
+                            borderColor: 'rgba(150, 150, 150, 1)',
+                            fill: false,
+                            pointRadius: 2
+                        }
+                    ]
+                }
+            });
+        }
+                
+        
+        
+        
+        // Consumption chart - filter nulls
+        const consumptionData = historicalData.filter(d => d.consumption !== null);
+        const consumptionLabels = consumptionData.map(d => `P${d.period}`);
+        
+        new Chart(document.getElementById('consumptionChart'), {
+            type: 'line',
+            data: {
+                labels: consumptionLabels,
+                datasets: [
+                    { 
+                        label: 'Consumption (c)', 
+                        data: consumptionData.map(d => d.consumption), 
+                        borderColor: 'rgba(75, 192, 192, 1)', 
+                        fill: false 
+                    },
+                    { 
+                        label: 'Payoff/utility (u)', 
+                        data: consumptionData.map(d => d.utility), 
+                        borderColor: 'rgba(153, 102, 255, 1)', 
+                        fill: false
+                    }
+                ]
+            },
+            options: { scales: { y: { beginAtZero: true } } }
+        });
+        
+        // Production Chart - SAME AS ProductionPhase
+        new Chart(document.getElementById('productionChart'), {
+            type: 'line',
+            data: {
+                labels: labels,
+                datasets: [
+                    { 
+                        label: 'Output (Start of Period)',
+                        data: historicalData.map(d => d.output_initial), // This was already correct
+                        borderColor: 'rgba(54, 162, 235, 1)',
+                        fill: false
+                    }
+                ]
+            },
+            options: { scales: { y: { beginAtZero: true } } }
+        });
+
+        // Temperature Chart
+        new Chart(document.getElementById('temperatureChart'), {
+            type: 'line',
+            data: {
+                labels: labels,
+                datasets: [{ 
+                    label: 'Temperature (T)', 
+                    data: historicalData.map(d => d.temperature), 
+                    borderColor: 'rgba(255, 99, 132, 1)', 
+                    fill: false 
+                }]
+            }
+        });
+    } catch (e) { console.error('Chart error:', e); }
+
+    // ... rest of allocation validation and investment calculator code stays the same ...
+
+
+
+
+
+    // Allocation validation logic
+    const isMarket = {{ is_market|json }};
+    const availableOutput = {{ current_output }};
+    const greenCapitalCost = {{ type1_capital_display_cost }};
+    const consumptionInput = document.getElementById(isMarket ? 'id_individual_consumption' : 'id_consumption');
+    const brownInvestmentInput = document.getElementById(isMarket ? 'id_individual_brown_investment' : 'id_brown_investment');
+    const greenInvestmentInput = document.getElementById(isMarket ? 'id_individual_green_investment' : 'id_green_investment');
+    const totalAllocationSpan = document.getElementById('totalAllocation');
+    const remainingSpan = document.getElementById('remaining');
+    const statusP = document.getElementById('allocationStatus');
+    
+    function updateCalculations() {
+        if (!consumptionInput || !brownInvestmentInput || !greenInvestmentInput) return;
+        const c = parseFloat(consumptionInput.value) || 0;
+        const ib = parseFloat(brownInvestmentInput.value) || 0;
+        const ig = parseFloat(greenInvestmentInput.value) || 0;
+        const total = c + ib + (greenCapitalCost * ig);
+        const remaining = availableOutput - total;
+        totalAllocationSpan.textContent = total.toFixed(2);
+        remainingSpan.textContent = remaining.toFixed(2);
+        if (Math.abs(remaining) < 0.01) { statusP.textContent = "Allocation matches resources!"; statusP.className = "text-success mb-0"; }
+        else if (remaining > 0.01) { statusP.textContent = "You have unallocated output."; statusP.className = "text-warning mb-0"; }
+        else { statusP.textContent = "Over-allocated! Please reduce."; statusP.className = "text-danger mb-0"; }
+    }
+    [consumptionInput, brownInvestmentInput, greenInvestmentInput].forEach(input => { if (input) input.addEventListener('input', updateCalculations); });
+    updateCalculations();
+
+    // Investment Impact Visualizer (keep existing code)
+    const investTypeSelect = document.getElementById('invest_type_select');
+    const investAmountInput = document.getElementById('invest_amount_input');
+    const flowDiagram = document.getElementById('flow_diagram');
+    
+    const CONSTANTS = {
+        brownCapital: {{ type3_capital_display }},
+        greenCapital: {{ type1_capital_display }},
+        currentTemperature: {{ temperature }},
+        productivity: {{ productivity }},
+        ALPHA: 0.33, 
+        UPSILON: 0.22, 
+        DELTA: 0.10, 
+        GREEN_DELTA: 0.10, 
+        S: 1.0, 
+        M: 3.0,  // k_3 produces 3x as much emissions as k_1
+        XI: 0.0035, 
+        ZETA: 0.05, 
+        PI_1: 0.0000, 
+        PI_2: 0.05,
+        isBaseline: {{ is_baseline|json }}
+    };
+
+    function calculateFlowEffects(investType, amount) {
+        const isBrown = investType === 'brown';
+        const kB_t = CONSTANTS.brownCapital;
+        const kG_t = CONSTANTS.greenCapital;
+        const T_t = CONSTANTS.currentTemperature;
+
+        const kB_t1_baseline = (1 - CONSTANTS.DELTA) * kB_t;
+        const kG_t1_baseline = (1 - CONSTANTS.GREEN_DELTA) * kG_t;
+
+        let kB_t1_invest = kB_t1_baseline;
+        let kG_t1_invest = kG_t1_baseline;
+        if (isBrown) { kB_t1_invest += amount; } else { kG_t1_invest += amount; }
+
+        const y_t1_baseline = CONSTANTS.productivity * Math.pow(kG_t1_baseline, CONSTANTS.UPSILON) * Math.pow(kB_t1_baseline, CONSTANTS.ALPHA);
+        const y_t1_invest = CONSTANTS.productivity * Math.pow(kG_t1_invest, CONSTANTS.UPSILON) * Math.pow(kB_t1_invest, CONSTANTS.ALPHA);
+        const delta_y_t1 = y_t1_invest - y_t1_baseline;
+
+        // --- START: Correct Logic ---
+        // ALWAYS calculate emissions and temperature dynamics
+        const e_t1_baseline = CONSTANTS.S * (kG_t1_baseline + CONSTANTS.M * kB_t1_baseline);
+        const e_t1_invest = CONSTANTS.S * (kG_t1_invest + CONSTANTS.M * kB_t1_invest);
+        const delta_e = e_t1_invest - e_t1_baseline;
+
+        const e_t = CONSTANTS.S * (kG_t + CONSTANTS.M * kB_t);
+        const T_t1 = (1 - CONSTANTS.ZETA) * T_t + CONSTANTS.XI * e_t;
+        const T_t2_baseline = (1 - CONSTANTS.ZETA) * T_t1 + CONSTANTS.XI * e_t1_baseline;
+        const T_t2_invest = (1 - CONSTANTS.ZETA) * T_t1 + CONSTANTS.XI * e_t1_invest;
+        const delta_T = T_t2_invest - T_t2_baseline; // This is the correct delta_T
+
+        let delta_y_t2_from_omega, omega_baseline, omega_invest, delta_omega;
+        
+        if (CONSTANTS.isBaseline) {
+            // Baseline: Omega is always 1.0 (temperature doesn't affect productivity)
+            omega_baseline = 1.0;
+            omega_invest = 1.0;
+            delta_omega = 0;
+            delta_y_t2_from_omega = 0;
+        } else {
+            // Control: Temperature affects productivity through Omega
+            omega_baseline = 1.0 / (1.0 + CONSTANTS.PI_1 * T_t2_baseline + CONSTANTS.PI_2 * Math.pow(T_t2_baseline, 2));
+            omega_invest = 1.0 / (1.0 + CONSTANTS.PI_1 * T_t2_invest + CONSTANTS.PI_2 * Math.pow(T_t2_invest, 2));
+            delta_omega = omega_invest - omega_baseline;
+
+            const y_t1_invest_with_new_omega = omega_invest * y_t1_invest;
+            const y_t1_invest_with_old_omega = omega_baseline * y_t1_invest;
+            delta_y_t2_from_omega = y_t1_invest_with_new_omega - y_t1_invest_with_old_omega;
+        }
+        // --- END: Correct Logic ---
+
+        const net_effect = delta_y_t1 + delta_y_t2_from_omega;
+        
+        // Return ALL values, including delta_T
+        return { 
+            investAmount: amount, 
+            investType: isBrown ? 'Brown' : 'Green', 
+            delta_y_t1, 
+            delta_e, 
+            delta_T, // Make sure delta_T is returned
+            omega_baseline, 
+            omega_invest, 
+            delta_omega, 
+            delta_y_t2_from_omega, 
+            net_effect 
+        };
+    }
+
+
+
+    function getColorClass(value) { return Math.abs(value) < 0.00005 ? 'neutral' : value > 0 ? 'positive' : 'negative'; }
+    
+    function renderFlowDiagram(effects) {
+        const isBrown = effects.investType === 'Brown';
+        const investSymbol = isBrown ? 'i<sub>3,t</sub>' : 'i<sub>1,t</sub>';
+        const capitalType = isBrown ? '3' : '1';  // Just the number for building subscripts
+        const omegaChangeClass = Math.abs(effects.delta_omega) < 0.0001 ? 'neutral' : (effects.delta_omega > 0 ? 'positive' : 'negative');
+        const delta_y_t1_class = getColorClass(effects.delta_y_t1);
+        const delta_y_t2_class = getColorClass(effects.delta_y_t2_from_omega);
+        
+        // Calculate depreciation cascade (10% depreciation rate)
+        const DELTA = 0.10;
+        let depreciationCascade = [];
+        let currentCapital = effects.investAmount;
+        for (let p = 1; p <= 4; p++) {
+            currentCapital = currentCapital * (1 - DELTA);
+            depreciationCascade.push(currentCapital);
+        }
+        
+        const html = `
+            <div class="flow-container">
+                <div class="flow-level">
+                    <div class="flow-box start">
+                        <div class="flow-label">Investment</div>
+                        <div class="flow-value">${investSymbol} = ${effects.investAmount.toFixed(1)}</div>
+                        <div class="period-label">Period t</div>
+                    </div>
+                </div>
+                <div class="diagonal-split" style="margin-top: -80px;">
+                    <div class="branch-container">
+                        <div class="diagonal-arrow">↙</div>
+                        <div class="arrow-label">Direct Production Channel</div>
+                        <div class="flow-box ${effects.delta_y_t1 > 0 ? 'positive' : 'negative'}">
+                            <div class="flow-label">Δ Output<sub>t+1</sub></div>
+                            <div class="flow-change ${effects.delta_y_t1 > 0 ? 'up' : 'down'}">
+                                ${effects.delta_y_t1 > 0 ? '↑' : '↓'} ${effects.delta_y_t1.toFixed(3)}
+                            </div>
+                            <div class="period-label">assuming Ω<sub>t+1</sub> constant</div>
+                        </div>
+                    </div>
+                    <div class="branch-container center-branch" style="margin-top: 80px;">
+                        <div class="arrow-label">Capital Depreciation</div>
+                        <div class="cascade-box-flow">
+                            <div class="flow-label">k<sub>${capitalType},t+1</sub></div>
+                            <div class="flow-value" style="font-size: 16px;">${depreciationCascade[0].toFixed(3)} remains</div>
+                            <div class="cascade-detail">90% remains | <span style="color: #dc3545;">-${(effects.investAmount * DELTA).toFixed(3)} loss</span></div>
+                        </div>
+                        <div class="flow-arrow" style="margin: 0; font-size: 16px;">↓</div>
+                        <div class="cascade-box-flow">
+                            <div class="flow-label">k<sub>${capitalType},t+2</sub></div>
+                            <div class="flow-value" style="font-size: 16px;">${depreciationCascade[1].toFixed(3)} remains</div>
+                            <div class="cascade-detail">90% remains | <span style="color: #dc3545;">-${(depreciationCascade[0] * DELTA).toFixed(3)} loss</span></div>
+                        </div>
+                        <div class="flow-arrow" style="margin: 0; font-size: 16px;">↓</div>
+                        <div class="cascade-box-flow">
+                            <div class="flow-label">k<sub>${capitalType},t+3</sub></div>
+                            <div class="flow-value" style="font-size: 16px;">${depreciationCascade[2].toFixed(3)} remains</div>
+                            <div class="cascade-detail">90% remains | <span style="color: #dc3545;">-${(depreciationCascade[1] * DELTA).toFixed(3)} loss</span></div>
+                        </div>
+                        <div class="flow-arrow" style="margin: 0; font-size: 16px;">↓</div>
+                        <div class="cascade-box-flow">
+                            <div class="flow-label">k<sub>${capitalType},t+4</sub></div>
+                            <div class="flow-value" style="font-size: 16px;">${depreciationCascade[3].toFixed(3)} remains</div>
+                            <div class="cascade-detail">90% remains | <span style="color: #dc3545;">-${(depreciationCascade[2] * DELTA).toFixed(3)} loss</span></div>
+                        </div>
+                    </div>
+                    <div class="branch-container right-branch">
+                        <div class="diagonal-arrow">↘</div>
+                        <div class="arrow-label">Indirect Climate Channel</div>
+                        <div class="flow-box ${effects.delta_e < 0 ? 'positive' : 'negative'}">
+                            <div class="flow-label">Δ Emissions<sub>t+1</sub></div>
+                            <div class="flow-change ${effects.delta_e < 0 ? 'up' : 'down'}">
+                                ${effects.delta_e > 0 ? '↑' : '↓'} ${effects.delta_e.toFixed(3)}
+                            </div>
+                            <div class="period-label">Period t+1</div>
+                        </div>
+                        <div class="flow-arrow" style="margin: 0;">↓</div>
+                        <div class="flow-box ${effects.delta_e < 0 ? 'positive' : 'negative'}">
+                            <div class="flow-label">Δ Temperature<sub>t+2</sub></div>
+                            <div class="flow-change ${effects.delta_e < 0 ? 'up' : 'down'}">
+                                ${CONSTANTS.XI * effects.delta_e > 0 ? '↑' : '↓'} ${Math.abs(CONSTANTS.XI * effects.delta_e).toFixed(4)}
+                            </div>
+                            <div class="period-label">Period t+2</div>
+                        </div>
+                        <div class="flow-arrow" style="margin: 0;">↓</div>
+                        <div class="flow-box ${omegaChangeClass}">
+                            <div class="flow-label">Δ Ω<sub>t+2</sub></div>
+                            ${Math.abs(effects.delta_omega) > 0.0001 ? `
+                            <div class="flow-change ${effects.delta_omega > 0 ? 'up' : 'down'}">
+                                ${effects.delta_omega > 0 ? '↑' : '↓'} ${Math.abs(effects.delta_omega).toFixed(4)}
+                                <br><span style="font-size: 13px;">(${Math.abs(effects.delta_omega * 100).toFixed(2)}% Output ${effects.delta_omega > 0 ? 'gain' : 'loss'})</span>
+                            </div>
+                            ` : `
+                            <div class="flow-change neutral">
+                                ${CONSTANTS.isBaseline ? 'No environmental effects' : 'Negligible change (< 0.0001)'}
+                            </div>
+                            `}
+                            <div class="period-label">Ω w/o change: ${effects.omega_baseline.toFixed(4)} | Ω w/ change: ${effects.omega_invest.toFixed(4)}</div>
+                        </div>
+                        <div class="flow-arrow" style="margin: 0;">↓</div>
+                        <div class="flow-box ${Math.abs(effects.delta_y_t2_from_omega) < 0.0001 ? 'neutral' : (effects.delta_y_t2_from_omega > 0 ? 'positive' : 'negative')}">
+                            <div class="flow-label">Δ Output<sub>t+2</sub> (from Ω change)</div>
+                            ${Math.abs(effects.delta_y_t2_from_omega) > 0.0001 ? `
+                            <div class="flow-change ${effects.delta_y_t2_from_omega > 0 ? 'up' : 'down'}">
+                                ${effects.delta_y_t2_from_omega > 0 ? '↑' : '↓'} ${Math.abs(effects.delta_y_t2_from_omega).toFixed(4)}
+                            </div>
+                            ` : `
+                            <div class="flow-change neutral">
+                                ${CONSTANTS.isBaseline ? 'No environmental effects' : 'Negligible (< 0.0001)'}
+                            </div>
+                            `}
+                            <div class="period-label">Period t+2</div>
+                        </div>
+                    </div>
+                </div>
+                <div class="flow-arrow" style="font-size: 22px; margin: -40px 0 5px 0;">↓</div>
+                <div class="flow-level">
+                    <div class="flow-box ${effects.net_effect > 0 ? 'positive' : 'negative'}" style="min-width: 320px; max-width: 500px;">
+                        <div class="flow-label" style="font-size: 15px;"><strong>Δ Net Effect</strong></div>
+                        <div class="flow-value" style="font-size: 20px;">
+                            <span class="net-effect-number ${delta_y_t1_class}">${effects.delta_y_t1.toFixed(4)}</span> + 
+                            <span class="net-effect-number ${delta_y_t2_class}">${effects.delta_y_t2_from_omega.toFixed(4)}</span> = 
+                            <span class="net-effect-number ${getColorClass(effects.net_effect)}">${effects.net_effect.toFixed(4)}</span>
+                        </div>
+                        <div class="flow-change ${effects.net_effect > 0 ? 'up' : 'down'}">
+                            Overall ${effects.net_effect > 0 ? 'gain' : 'loss'}: ${effects.net_effect > 0 ? '↑' : '↓'} ${Math.abs(effects.net_effect).toFixed(4)}
+                        </div>
+                        <div class="alert ${effects.net_effect > 0 ? 'alert-success' : 'alert-warning'} summary-box">
+                            <strong>Summary:</strong> Investing ${effects.investAmount.toFixed(1)} in ${effects.investType === 'Brown' ? 'Type-3' : 'Type-1'} capital
+                            gives an immediate output ${effects.delta_y_t1 > 0 ? 'increase' : 'decrease'} of ${Math.abs(effects.delta_y_t1).toFixed(4)}, 
+                            ${CONSTANTS.isBaseline ? 'with no temperature effect' : 
+                            (Math.abs(effects.delta_y_t2_from_omega) < 0.0001 ? 'with negligible environmental effects' :
+                            `plus ${effects.delta_y_t2_from_omega > 0 ? 'a gain' : 'a loss'} of ${Math.abs(effects.delta_y_t2_from_omega).toFixed(4)} from environmental ${isBrown ? 'damage' : 'benefits'}`)}, 
+                            for a net effect of ${effects.net_effect > 0 ? '+' : ''}${effects.net_effect.toFixed(4)}.
+                        </div>
+                    </div>
+                </div>
+            </div>
+        `;
+        flowDiagram.innerHTML = html;
+    }
+
+    function updateFlowDiagram() {
+        const investType = investTypeSelect.value;
+        const amount = parseFloat(investAmountInput.value) || 0;
+        if (amount <= 0) {
+            flowDiagram.innerHTML = '<p class="text-center text-muted small">Enter an investment amount > 0 to see effects.</p>';
+            return;
+        }
+        const effects = calculateFlowEffects(investType, amount);
+        renderFlowDiagram(effects);
+    }
+
+    investTypeSelect.addEventListener('change', updateFlowDiagram);
+    investAmountInput.addEventListener('input', updateFlowDiagram);
+    updateFlowDiagram();
+});
+</script>
+{{ endblock }}

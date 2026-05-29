@@ -1,0 +1,106 @@
+{{ block title }}
+    First Part Complete
+{{ endblock }}
+
+{{ block content }}
+<script>
+// MathJax configuration for LaTeX rendering
+MathJax = {
+  tex: { inlineMath: [['$', '$'], ['\\(', '\\)']], displayMath: [['$$', '$$'], ['\\[', '\\]']] },
+  svg: { fontCache: 'global' }
+};
+</script>
+<script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+
+<div class="container mt-5">
+    <div class="row">
+        <div class="col-md-12">
+            <div class="card border-danger">
+                <div class="card-header" style="background-color: #dc3545; border-color: #dc3545;">
+                    <h1 class="text-center mb-0 text-white" style="font-size: 2.5rem; font-weight: bold;">
+                        <i class="fas fa-exclamation-triangle"></i> ATTENTION!
+                    </h1>
+                    <p class="text-center text-white mt-2 mb-0" style="font-size: 1.1rem; font-weight: 500;">
+                        <i class="fas fa-hand-paper"></i> Please do NOT click "Next" yet. <br>
+                        Read this page carefully first, and wait until the experimenter reads the following instructions out loud for everyone.
+                    </p>
+                    </div>
+                <div class="card-body">
+                    <div class="alert alert-danger" style="border: 3px solid #dc3545;">
+                        <h2 class="text-center" style="color: #dc3545; font-size: 2rem; font-weight: bold; margin-bottom: 20px;">
+                            What Happens Next:
+                        </h2>
+                        <div class="alert alert-warning mt-3">
+                            <h5><strong>Key Changes:</strong></h5>
+                            {% if first_treatment == 'Social Planner' %}
+                                <p><strong>Until now:</strong> You managed an entire economy by yourself.</p>
+                                <p><strong>From now on:</strong> You will be one agent in an economy of 5 agents total. The other 4 agents are participants in this room right now. You are assigned to an economy of 5 agents at the beginning of period 1, and the agents in that economy do not change for the duration of the game (i.e. there's no reassignment of people)</p>
+                                <p class="mb-0"><strong>New feature:</strong> Before making your allocation decisions each period, you will trade capital with the other 4 agents in capital markets.</p>
+                            {% else %}
+                                <p><strong>Until now:</strong> You were one agent among 5 in your economy, trading with others in capital markets.</p>
+                                <p><strong>From now on:</strong> You will manage an entire economy by yourself. You will make all decisions independently. That is, imagine you are the planner of an entire world-economy: <strong>you are the only person in this world-economy</strong>, and therefore your production and consumption only depend on your own decisions, and no one elses in this room.</p>
+                                <p class="mb-0"><strong>What changes:</strong> There will be no more capital trading. You simply allocate your production output each period.</p>
+                            {% endif %}
+                            
+                            <div class="mt-4 border-top pt-3">
+                                <h5 class="text-center mb-3">New Economy Parameters</h5>
+                                <div class="row">
+                                    <div class="col-md-6">
+                                        <strong>New Production Function:</strong>
+                                        <div class="text-center" style="font-size: 16px; padding: 10px; background: white; border-radius: 5px; margin-top: 5px;">
+                                            {% if first_treatment == 'Social Planner' %}
+                                                $$ y_{i,t} = \textcolor{red}{\textbf{ {{ new_productivity }} }} \cdot \Omega_t \cdot k_{1,i,t}^{0.22} \cdot k_{3,i,t}^{0.33} $$
+                                            {% else %}
+                                                $$ y_{t} = \textcolor{red}{\textbf{ {{ new_productivity }} }} \cdot \Omega_t \cdot k_{1,t}^{0.22} \cdot k_{3,t}^{0.33} $$
+                                            {% endif %}
+                                        </div>
+                                        
+                                        <strong class="mt-3 d-block">New Utility Function:</strong>
+                                        <div class="text-center" style="font-size: 16px; padding: 10px; background: white; border-radius: 5px; margin-top: 5px;">
+                                            {% if first_treatment == 'Social Planner' %}
+                                                $$ u_{i,t} = \textcolor{red}{\textbf{ {{ new_payoff_rate }} }} \times \sqrt{c_{i,t}} $$
+                                            {% else %}
+                                                $$ u_{t} = \textcolor{red}{\textbf{ {{ new_payoff_rate }} }} \times \sqrt{c_{t}} $$
+                                            {% endif %}
+                                        </div>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <strong>Initial State for New Economy:</strong>
+                                        <ul class="list-group mt-2 text-start">
+                                            <li class="list-group-item">Initial Type-3 Capital ($k_3$): <strong>{{ new_type3_capital_display }}</strong> units</li>
+                                            <li class="list-group-item">Initial Type-1 Capital ($k_1$): <strong>{{ new_type1_capital_display }}</strong> units</li>
+                                            <li class="list-group-item">Initial Temperature: <strong>{{ initial_temperature }}</strong> anomaly</li>
+                                        </ul>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            {% if not is_baseline %}
+                            <div class="mt-3 border-top pt-3">
+                                <p class="mb-0"><strong>Regarding Temperature Impact:</strong> 
+                                {% if first_treatment == 'Social Planner' %}
+                                    From now on, the temperature will be determined by the <strong>combined emissions</strong> of all 5 agents in your new economy.
+                                {% else %}
+                                    From now on, the aggregate emissions (and thereby temperature) will be determined <strong>solely by your decisions</strong>.
+                                {% endif %}
+                                </p>
+                            </div>
+                            {% endif %}
+                        </div>
+                        
+                        <p class="mt-3 mb-0"><strong>Duration:</strong> Random termination rule: as before, at the end of each period the probability that the economy continues into the next period is 93%. That is, at the end of each period the economy will end with probability 7%. </p>
+                    </div>
+
+                    <p class="text-muted">Please click Continue when you're ready to begin the second part.</p>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="row mt-4">
+        <div class="col-md-12 text-center">
+            {{ next_button }}
+        </div>
+    </div>
+</div>
+{{ endblock }}

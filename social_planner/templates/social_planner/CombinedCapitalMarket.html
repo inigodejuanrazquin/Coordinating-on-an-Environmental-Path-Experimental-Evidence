@@ -1,0 +1,961 @@
+{{ block title }}
+    Period {{ period_number }} - Capital Markets (Agent {{ agent_type }})
+{{ endblock }}
+
+{{ block content }}
+<link href="https://cdnjs.cloudflare.com/ajax/libs/noUiSlider/15.7.0/nouislider.min.css" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/noUiSlider/15.7.0/nouislider.min.js"></script>
+<script src="https://polyfill.io/v3/polyfill.min.js?features=es6"></script>
+<script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+
+<div class="container mt-4">
+    <div class="row">
+        <div class="col-md-12">
+            <h2 class="text-center mb-4">
+                Period {{ period_number }} - Capital Markets
+                <br><small class="text-muted">Agent {{ agent_type }}</small>
+            </h2>
+        </div>
+    </div>
+
+    <!-- Interactive Investment Impact Visualizer -->
+    <div class="row mb-4">
+        <div class="col-md-12">
+            <div class="card border-secondary">
+                <div class="card-header bg-light text-dark">
+                    <h5><i class="fas fa-lightbulb"></i> Investment Effects Calculator (Ceteris Paribus)</h5>
+                </div>
+               <div class="card-body" style="padding: 15px;">
+                    <div class="alert alert-info" style="font-size: 13px; padding: 8px; margin-bottom: 10px;">
+                        <strong>💡 Reminder:</strong> Capital depreciates each period.
+                        If you invest <strong>q3</strong> units in Type-3 capital (k₃), <strong>{{ brown_depreciation_pct }}%</strong> will depreciate,
+                        so <strong>{{ brown_survival_pct }}%</strong> ({{ brown_survival_rate }} × q3) will still be available for production in future periods.
+                        For Type-1 capital (k₁), <strong>{{ green_depreciation_pct }}%</strong> depreciates,
+                        leaving <strong>{{ green_survival_pct }}%</strong> ({{ green_survival_rate }} × q1) available for future production.
+                    </div>
+                    <div class="row mb-2">
+                        <div class="col-md-4">
+                            <label for="invest_type_select" class="form-label small"><strong>Investment Type:</strong></label>
+                            <select id="invest_type_select" class="form-select form-select-sm">
+                                <option value="brown">Type-3 Capital (k₃) (i_3,t)</option>
+                                <option value="green">Type-1 Capital (k₁) (i_1,t)</option>
+                            </select>
+                        </div>
+                        <div class="col-md-3">
+                            <label for="invest_amount_input" class="form-label small"><strong>Investment Amount:</strong></label>
+                            <div class="input-group input-group-sm">
+                                <input type="number" id="invest_amount_input" class="form-control" value="1" min="0" step="0.1">
+                                <span class="input-group-text">units</span>
+                            </div>
+                        </div>
+                        <div class="col-md-5">
+                            <label class="form-label small"><strong>Your Current State (Period t):</strong></label>
+                            <div class="text-muted small">
+                                \(k_{3,t}\) = {{ type3_capital_display }} | \(k_{1,t}\) = {{ type1_capital_display }} | \(T_t\) = {{ temperature }}
+                            </div>
+                        </div>
+                    </div>
+                    <div class="investment-flow-diagram" id="flow_diagram">
+                        </div>
+                    </div>
+
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Resources and Instructions -->
+    <div class="row mb-4">
+        <div class="col-md-4">
+            <div class="card border-secondary">
+                <div class="card-header bg-light text-dark"><h5>Your Resources</h5></div>
+                <div class="card-body">
+                    <p><strong>Type-3 Capital (\(k_3\)):</strong> {{ type3_capital_display }} units</p>
+                    <p><strong>Type-1 Capital (\(k_1\)):</strong> {{ type1_capital_display }} units</p>
+                    <p><strong>Available Output:</strong> {{ current_output }} units</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-8">
+            <div class="card border-secondary">
+                <div class="card-header bg-light text-dark"><h5>Market Instructions</h5></div>
+                <div class="card-body">
+                    <ul class="mb-0">
+                        <li>Use the sliders to set your <strong class="text-primary">maximum buying price</strong> (left circle) and <strong class="text-danger">minimum selling price</strong> (right circle)</li>
+                        <li><span class="badge" style="background-color: rgba(65, 105, 225, 0.7);">Blue area</span> shows prices you'd accept to BUY at</li>
+                        <li><span class="badge" style="background-color: rgba(255, 69, 0, 0.6);">Orange-red area</span> shows prices you'd accept to SELL at</li>
+                        <li>Choose quantities to buy or sell (or leave at 0 for no trade)</li>
+                        <li>All trades execute at the market equilibrium price</li>
+                        <li>You must wait 30 seconds before submitting</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- IMPORTANT WARNING BOX -->
+    <div class="row mb-3">
+        <div class="col-md-12">
+            <div class="alert" style="background-color: #d1ecf1; border-color: #bee5eb; color: #0c5460;">
+                <h5 class="alert-heading"><i class="fas fa-exclamation-triangle"></i> <strong>Important: Capital Complementarity</strong></h5>
+                <p class="mb-2">
+                    <strong>You need BOTH \(k_1\) and \(k_3\) to produce!</strong> If you sell all of your \(k_1\) or all of your \(k_3\), 
+                    your production will be <strong>zero</strong>, and you won't be able to consume or invest!
+                </p>
+                <p class="mb-0">
+                    <strong>Production Function:</strong> 
+                    <span style="font-size: 1.1em;">
+                        \( y_t = {{ productivity }} \cdot \Omega_t \cdot k_{1,t}^{0.22} \cdot k_{3,t}^{0.33} \)
+                    </span>
+                </p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Type-3 Capital Market -->
+    <div class="row mb-4">
+        <div class="col-md-12">
+            <div class="card border-secondary">
+                <div class="card-header bg-light text-dark">
+                    <h4><i class="fas fa-industry"></i> Type-3 Capital Market</h4>
+                </div>
+                <div class="card-body">
+                    <div class="row mb-4">
+                        <div class="col-md-12">
+                            <h6>Set Your Price Range</h6>
+                            <div class="price-slider-container">
+                                <div id="brown-price-slider" class="price-slider mb-2"></div>
+                                <div class="slider-labels">
+                                    <span class="slider-label-left">
+                                        <strong class="text-primary">Max Buy Price:</strong> <span id="brown-buy-price-label">5.0</span> units
+                                    </span>
+                                    <span class="slider-label-right">
+                                        <strong class="text-danger">Min Sell Price:</strong> <span id="brown-sell-price-label">15.0</span> units
+                                    </span>
+                                </div>
+                            </div>
+                            <div id="brown-price-error" class="alert alert-danger mt-3" style="display: none;">
+                                <strong>⚠️ Careful:</strong> The maximum price you are willing to pay to buy cannot be higher than the minimum price you are willing to sell it for.
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="row">
+                        <div class="col-md-6">
+                            <h6>How many units do you want to buy?</h6>
+                            <div id="brown-buy-quantity-slider" class="quantity-slider mb-2"></div>
+                            <div class="text-center">
+                                <span id="brown-buy-qty-label">0.0</span> units
+                                <br><small class="text-muted">Max cost: <span id="brown-buy-cost">0.00</span> output units</small>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <h6>How many units do you want to sell?</h6>
+                            <div id="brown-sell-quantity-slider" class="quantity-slider mb-2"></div>
+                            <div class="text-center">
+                                <span id="brown-sell-qty-label">0.0</span> units
+                                <br><small class="text-muted">Min revenue: <span id="brown-sell-revenue">0.00</span> output units</small>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Type-1 Capital Market -->
+    <div class="row mb-4">
+        <div class="col-md-12">
+            <div class="card border-secondary">
+                <div class="card-header bg-light text-dark">
+                    <h4><i class="fas fa-leaf"></i> Type-1 Capital Market</h4>
+                </div>
+                <div class="card-body">
+                    <div class="row mb-4">
+                        <div class="col-md-12">
+                            <h6>Set Your Price Range</h6>
+                            <div class="price-slider-container">
+                                <div id="green-price-slider" class="price-slider mb-2"></div>
+                                <div class="slider-labels">
+                                    <span class="slider-label-left">
+                                        <strong class="text-primary">Max Buy Price:</strong> <span id="green-buy-price-label">5.0</span> units
+                                    </span>
+                                    <span class="slider-label-right">
+                                        <strong class="text-danger">Min Sell Price:</strong> <span id="green-sell-price-label">15.0</span> units
+                                    </span>
+                                </div>
+                            </div>
+                            <div id="green-price-error" class="alert alert-danger mt-3" style="display: none;">
+                                <strong>⚠️ Careful:</strong> The maximum price you are willing to pay to buy cannot be higher than the minimum price you are willing to sell it for.
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="row">
+                        <div class="col-md-6">
+                            <h6>How many units do you want to buy?</h6>
+                            <div id="green-buy-quantity-slider" class="quantity-slider mb-2"></div>
+                            <div class="text-center">
+                                <span id="green-buy-qty-label">0.0</span> units
+                                <br><small class="text-muted">Max cost: <span id="green-buy-cost">0.00</span> output units</small>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <h6>How many units do you want to sell?</h6>
+                            <div id="green-sell-quantity-slider" class="quantity-slider mb-2"></div>
+                            <div class="text-center">
+                                <span id="green-sell-qty-label">0.0</span> units
+                                <br><small class="text-muted">Min revenue: <span id="green-sell-revenue">0.00</span> output units</small>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Hidden form fields -->
+    <div style="display: none;">
+        {{ form.brown_capital_bid_price }}
+        {{ form.brown_capital_bid_quantity }}
+        {{ form.brown_capital_ask_price }}
+        {{ form.brown_capital_ask_quantity }}
+        {{ form.green_capital_bid_price }}
+        {{ form.green_capital_bid_quantity }}
+        {{ form.green_capital_ask_price }}
+        {{ form.green_capital_ask_quantity }}
+    </div>
+
+    <div class="row">
+        <div class="col-md-12 text-center">
+            <button id="submit_button" class="otree-btn-next btn btn-primary btn-lg">Submit Market Orders</button>
+            <p id="timer_message" class="text-muted mt-2" style="display: none;"></p>
+        </div>
+    </div>
+</div>
+
+<style>
+.price-slider {
+    height: 60px;
+    margin: 30px 10px 10px 10px;
+}
+
+.quantity-slider {
+    height: 40px;
+    margin: 10px;
+}
+
+.price-slider-container {
+    padding: 10px;
+}
+
+.slider-labels {
+    display: flex;
+    justify-content: space-between;
+    margin-top: 10px;
+    font-size: 0.95em;
+}
+
+.slider-label-left {
+    text-align: left;
+}
+
+.slider-label-right {
+    text-align: right;
+}
+
+/* Styling for the buy region (below max buy price) - blue */
+.noUi-connect.buy-region {
+    background: linear-gradient(to right, rgba(65, 105, 225, 0.7), rgba(65, 105, 225, 0.5)) !important;
+}
+
+/* Styling for the sell region (above min sell price) - orange-red */
+.noUi-connect.sell-region {
+    background: linear-gradient(to right, rgba(255, 69, 0, 0.5), rgba(255, 69, 0, 0.7)) !important;
+}
+
+/* Middle region (between handles) - neutral gray */
+.noUi-connect.middle-region {
+    background: rgba(200, 200, 200, 0.3) !important;
+}
+
+.noUi-handle {
+    border-radius: 50%;
+    cursor: pointer;
+    box-shadow: 0 2px 6px rgba(0,0,0,0.3);
+}
+
+.card {
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
+
+/* Investment Flow Diagram Styles - CONDENSED WITH DIAGONAL BRANCHES */
+.investment-flow-diagram {
+    padding: 15px 10px;
+    background: #f8f9fa;
+    border-radius: 8px;
+    min-height: 250px;
+}
+
+.flow-container {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 8px;
+}
+
+.flow-level {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 15px;
+    width: 100%;
+}
+
+.flow-box {
+    background: white;
+    border: 2px solid #007bff;
+    border-radius: 6px;
+    padding: 10px 15px;
+    min-width: 180px;
+    max-width: 260px;
+    text-align: center;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+}
+
+.flow-box.start {
+    border-color: #6c757d;
+    background: #e9ecef;
+    font-weight: bold;
+}
+
+.flow-box.positive {
+    border-color: #28a745;
+    background: #d4edda;
+}
+
+.flow-box.negative {
+    border-color: #dc3545;
+    background: #f8d7da;
+}
+
+.flow-box.neutral {
+    border-color: #ffc107;
+    background: #fff3cd;
+}
+
+.flow-arrow {
+    font-size: 20px;
+    color: #6c757d;
+    font-weight: bold;
+}
+
+.flow-label {
+    font-size: 15px;
+    font-weight: bold;
+    color: #333;
+    margin-bottom: 5px;
+}
+
+.flow-value {
+    font-size: 18px;
+    margin: 5px 0;
+    color: #007bff;
+    font-weight: bold;
+}
+
+.flow-change {
+    font-size: 16px;
+    font-weight: bold;
+    margin-top: 4px;
+}
+
+.flow-change.up {
+    color: #28a745;
+}
+
+.flow-change.down {
+    color: #dc3545;
+}
+
+.flow-change.neutral {
+    color: #856404;
+}
+
+.period-label {
+    font-size: 13px;  /* Increased from 10px */
+    color: #495057;  /* Darker color */
+    font-weight: 600;  /* Make it bold */
+    margin-top: 5px;
+    padding: 3px 8px;
+    background-color: rgba(108, 117, 125, 0.1);  
+    border-radius: 3px;
+    display: inline-block;
+}
+
+.summary-box {
+    margin-top: 10px;
+    padding: 8px;
+    font-size: 12px;
+    border-radius: 4px;
+}
+
+.diagonal-split {
+    display: flex;
+    justify-content: space-around;
+    align-items: flex-start;
+    width: 100%;
+    gap: 80px;
+    position: relative;
+    margin: 5px 0;
+}
+
+.branch-container {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 8px;
+}
+
+.branch-container.right-branch {
+    gap: 1px;
+}
+
+.diagonal-arrow {
+    font-size: 40px;
+    color: #6c757d;
+    position: relative;
+    line-height: 1;
+}
+
+.arrow-label {
+    font-size: 11px;
+    color: #495057;
+    font-weight: 600;
+    margin-top: 2px;
+    text-align: center;
+}
+
+.net-effect-number {
+    display: inline;
+}
+
+.net-effect-number.positive {
+    color: #28a745;
+}
+
+.net-effect-number.negative {
+    color: #dc3545;
+}
+
+.net-effect-number.neutral {
+    color: #856404;
+}
+
+/* Central branch for depreciation cascade */
+.branch-container.center-branch { gap: 3px; }
+.cascade-box-flow { background: #e3f2fd; border: 2px solid #2196f3; border-radius: 6px; padding: 8px 12px; min-width: 160px; text-align: center; }
+.cascade-detail { font-size: 11px; color: #666; margin-top: 2px; }
+
+</style>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const brownCapital = {{ type3_capital_display }};
+    const greenCapital = {{ type1_capital_display }};
+    const availableOutput = {{ current_output }};
+    
+    // Timer logic
+    const submitBtn = document.getElementById('submit_button');
+    const timerMsg = document.getElementById('timer_message');
+    let timeLeft = 30;
+    let canSubmit = false;
+
+    submitBtn.disabled = true;
+    timerMsg.style.display = 'block';
+
+    const countdown = setInterval(function() {
+        if (timeLeft <= 0) {
+            clearInterval(countdown);
+            canSubmit = true;
+            checkSubmitEnabled();
+            timerMsg.textContent = 'You may now submit your orders.';
+            timerMsg.className = 'text-success mt-2 fw-bold';
+        } else {
+            timerMsg.textContent = `You can submit in ${timeLeft} seconds.`;
+            timeLeft -= 1;
+        }
+    }, 1000);
+
+    // Type-3 Capital (k₃) Price Slider
+    const brownPriceSlider = document.getElementById('brown-price-slider');
+    noUiSlider.create(brownPriceSlider, {
+        start: [1.45, 1.55],
+        connect: [true, false, true],
+        range: { 'min': 0, 'max': 4.0 },
+        step: 0.01,
+        tooltips: [true, true],
+        format: {
+            to: v => v.toFixed(2),
+            from: v => parseFloat(v)
+        }
+    });
+
+    const brownConnects = brownPriceSlider.querySelectorAll('.noUi-connect');
+    if (brownConnects.length >= 1) brownConnects[0].classList.add('buy-region');
+    if (brownConnects.length >= 2) brownConnects[1].classList.add('sell-region');
+
+    // Type-1 Capital (k₁) Price Slider
+    const greenPriceSlider = document.getElementById('green-price-slider');
+    noUiSlider.create(greenPriceSlider, {
+        start: [1.45, 1.55],
+        connect: [true, false, true],
+        range: { 'min': 0, 'max': 4.0 },
+        step: 0.01,
+        tooltips: [true, true],
+        format: {
+            to: v => v.toFixed(2),
+            from: v => parseFloat(v)
+        }
+    });
+
+    const greenConnects = greenPriceSlider.querySelectorAll('.noUi-connect');
+    if (greenConnects.length >= 1) greenConnects[0].classList.add('buy-region');
+    if (greenConnects.length >= 2) greenConnects[1].classList.add('sell-region');
+
+    // Type-3 Quantity Sliders
+    const brownBuyQtySlider = document.getElementById('brown-buy-quantity-slider');
+    noUiSlider.create(brownBuyQtySlider, {
+        start: 0,
+        range: { 'min': 0, 'max': Math.max(10, brownCapital * 2) },
+        step: 0.1,
+        tooltips: true,
+        format: {
+            to: v => v.toFixed(1),
+            from: v => parseFloat(v)
+        }
+    });
+
+    const brownSellQtySlider = document.getElementById('brown-sell-quantity-slider');
+    noUiSlider.create(brownSellQtySlider, {
+        start: 0,
+        range: { 'min': 0, 'max': brownCapital },
+        step: 0.1,
+        tooltips: true,
+        format: {
+            to: v => v.toFixed(1),
+            from: v => parseFloat(v)
+        }
+    });
+
+    // Type-1 Quantity Sliders
+    const greenBuyQtySlider = document.getElementById('green-buy-quantity-slider');
+    noUiSlider.create(greenBuyQtySlider, {
+        start: 0,
+        range: { 'min': 0, 'max': Math.max(10, greenCapital * 2) },
+        step: 0.1,
+        tooltips: true,
+        format: {
+            to: v => v.toFixed(1),
+            from: v => parseFloat(v)
+        }
+    });
+
+    const greenSellQtySlider = document.getElementById('green-sell-quantity-slider');
+    noUiSlider.create(greenSellQtySlider, {
+        start: 0,
+        range: { 'min': 0, 'max': greenCapital },
+        step: 0.1,
+        tooltips: true,
+        format: {
+            to: v => v.toFixed(1),
+            from: v => parseFloat(v)
+        }
+    });
+
+    // Link price sliders to form fields and validation
+    function setupPriceSlider(slider, buyLabel, sellLabel, buyField, sellField, errorDiv, capitalType) {
+        slider.noUiSlider.on('update', function(values) {
+            const buyPrice = parseFloat(values[0]);
+            const sellPrice = parseFloat(values[1]);
+            
+            buyLabel.textContent = buyPrice.toFixed(2);
+            sellLabel.textContent = sellPrice.toFixed(2);
+            
+            document.getElementById(`id_${capitalType}_capital_bid_price`).value = buyPrice;
+            document.getElementById(`id_${capitalType}_capital_ask_price`).value = sellPrice;
+            
+            if (buyPrice > sellPrice) {
+                errorDiv.style.display = 'block';
+            } else {
+                errorDiv.style.display = 'none';
+            }
+            
+            checkSubmitEnabled();
+            updateCosts();
+        });
+    }
+
+    function setupQuantitySlider(slider, label, field) {
+        slider.noUiSlider.on('update', function(values) {
+            const qty = parseFloat(values[0]);
+            label.textContent = qty.toFixed(1);
+            field.value = qty;
+            updateCosts();
+        });
+    }
+
+    setupPriceSlider(
+        brownPriceSlider,
+        document.getElementById('brown-buy-price-label'),
+        document.getElementById('brown-sell-price-label'),
+        document.getElementById('id_brown_capital_bid_price'),
+        document.getElementById('id_brown_capital_ask_price'),
+        document.getElementById('brown-price-error'),
+        'brown'
+    );
+
+    setupPriceSlider(
+        greenPriceSlider,
+        document.getElementById('green-buy-price-label'),
+        document.getElementById('green-sell-price-label'),
+        document.getElementById('id_green_capital_bid_price'),
+        document.getElementById('id_green_capital_ask_price'),
+        document.getElementById('green-price-error'),
+        'green'
+    );
+
+    setupQuantitySlider(
+        brownBuyQtySlider,
+        document.getElementById('brown-buy-qty-label'),
+        document.getElementById('id_brown_capital_bid_quantity')
+    );
+
+    setupQuantitySlider(
+        brownSellQtySlider,
+        document.getElementById('brown-sell-qty-label'),
+        document.getElementById('id_brown_capital_ask_quantity')
+    );
+
+    setupQuantitySlider(
+        greenBuyQtySlider,
+        document.getElementById('green-buy-qty-label'),
+        document.getElementById('id_green_capital_bid_quantity')
+    );
+
+    setupQuantitySlider(
+        greenSellQtySlider,
+        document.getElementById('green-sell-qty-label'),
+        document.getElementById('id_green_capital_ask_quantity')
+    );
+
+    function updateCosts() {
+        const brownBuyPrice = parseFloat(document.getElementById('brown-buy-price-label').textContent);
+        const brownBuyQty = parseFloat(document.getElementById('brown-buy-qty-label').textContent);
+        const brownSellPrice = parseFloat(document.getElementById('brown-sell-price-label').textContent);
+        const brownSellQty = parseFloat(document.getElementById('brown-sell-qty-label').textContent);
+        
+        document.getElementById('brown-buy-cost').textContent = (brownBuyPrice * brownBuyQty).toFixed(2);
+        document.getElementById('brown-sell-revenue').textContent = (brownSellPrice * brownSellQty).toFixed(2);
+
+        const greenBuyPrice = parseFloat(document.getElementById('green-buy-price-label').textContent);
+        const greenBuyQty = parseFloat(document.getElementById('green-buy-qty-label').textContent);
+        const greenSellPrice = parseFloat(document.getElementById('green-sell-price-label').textContent);
+        const greenSellQty = parseFloat(document.getElementById('green-sell-qty-label').textContent);
+        
+        document.getElementById('green-buy-cost').textContent = (greenBuyPrice * greenBuyQty).toFixed(2);
+        document.getElementById('green-sell-revenue').textContent = (greenSellPrice * greenSellQty).toFixed(2);
+    }
+
+    function checkSubmitEnabled() {
+        const brownBuyPrice = parseFloat(document.getElementById('brown-buy-price-label').textContent);
+        const brownSellPrice = parseFloat(document.getElementById('brown-sell-price-label').textContent);
+        const greenBuyPrice = parseFloat(document.getElementById('green-buy-price-label').textContent);
+        const greenSellPrice = parseFloat(document.getElementById('green-sell-price-label').textContent);
+        
+        const brownValid = brownBuyPrice <= brownSellPrice;
+        const greenValid = greenBuyPrice <= greenSellPrice;
+        
+        submitBtn.disabled = !(canSubmit && brownValid && greenValid);
+    }
+
+    updateCosts();
+    checkSubmitEnabled();
+
+    // ========================================
+    // INVESTMENT IMPACT VISUALIZER
+    // ========================================
+    
+    const investTypeSelect = document.getElementById('invest_type_select');
+    const investAmountInput = document.getElementById('invest_amount_input');
+    const flowDiagram = document.getElementById('flow_diagram');
+    
+    // Check if this is a baseline treatment (passed from Django)
+    const isBaseline = {{ is_baseline|json }};
+    
+    const CONSTANTS = {
+        brownCapital: {{ type3_capital_display }},
+        greenCapital: {{ type1_capital_display }},
+        currentTemperature: {{ temperature }},
+        productivity: {{ productivity }},
+        ALPHA: 0.33, 
+        UPSILON: 0.22, 
+        DELTA: 0.10, 
+        GREEN_DELTA: 0.10, 
+        S: 1.0, 
+        M: 3.0,  // k_3 produces 3x as much emissions as k_1
+        XI: 0.0035, 
+        ZETA: 0.05, 
+        PI_1: 0.0000, 
+        PI_2: 0.05,
+        isBaseline: {{ is_baseline|json }}
+    };
+
+    function calculateFlowEffects(investType, amount) {
+    const isBrown = investType === 'brown';
+
+    // State in period t
+    const kB_t = CONSTANTS.brownCapital;
+    const kG_t = CONSTANTS.greenCapital;
+    const T_t = CONSTANTS.currentTemperature; // Make sure currentTemperature is passed
+
+    // --- BASELINE SCENARIO (No Investment) for t+1 ---
+    const kB_t1_baseline = (1 - CONSTANTS.DELTA) * kB_t;
+    const kG_t1_baseline = (1 - CONSTANTS.GREEN_DELTA) * kG_t;
+
+    // --- INVESTMENT SCENARIO for t+1 ---
+    let kB_t1_invest = kB_t1_baseline;
+    let kG_t1_invest = kG_t1_baseline;
+    if (isBrown) {
+        kB_t1_invest += amount;
+    } else {
+        kG_t1_invest += amount;
+    }
+
+    // --- Step 1: Calculate Direct Output Change in t+1 ---
+    // (This assumes omega is the same for both scenarios in t+1, which is correct)
+    const y_t1_baseline = CONSTANTS.productivity * Math.pow(kG_t1_baseline, CONSTANTS.UPSILON) * Math.pow(kB_t1_baseline, CONSTANTS.ALPHA);
+    const y_t1_invest = CONSTANTS.productivity * Math.pow(kG_t1_invest, CONSTANTS.UPSILON) * Math.pow(kB_t1_invest, CONSTANTS.ALPHA);
+    const delta_y_t1 = y_t1_invest - y_t1_baseline;
+    
+    
+
+    // --- Step 2: Calculate Emissions and Temperature for t+2 ---
+    // ALWAYS calculate emissions and temperature changes (happens in both treatments)
+    const e_t1_baseline = CONSTANTS.S * (kG_t1_baseline + CONSTANTS.M * kB_t1_baseline);
+    const e_t1_invest = CONSTANTS.S * (kG_t1_invest + CONSTANTS.M * kB_t1_invest);
+    const delta_e = e_t1_invest - e_t1_baseline;
+
+    const e_t = CONSTANTS.S * (kG_t + CONSTANTS.M * kB_t);
+    const T_t1 = (1 - CONSTANTS.ZETA) * T_t + CONSTANTS.XI * e_t;
+    const T_t2_baseline = (1 - CONSTANTS.ZETA) * T_t1 + CONSTANTS.XI * e_t1_baseline;
+    const T_t2_invest = (1 - CONSTANTS.ZETA) * T_t1 + CONSTANTS.XI * e_t1_invest;
+    const delta_T = T_t2_invest - T_t2_baseline;
+
+    let delta_y_t2_from_omega, omega_baseline, omega_invest, delta_omega;
+    
+    
+        if (CONSTANTS.isBaseline) {
+        // Baseline: Omega is always 1.0 (temperature doesn't affect productivity)
+        omega_baseline = 1.0;
+        omega_invest = 1.0;
+        delta_omega = 0;
+        delta_y_t2_from_omega = 0;
+    } else {
+        // Control: Temperature affects productivity through Omega
+        omega_baseline = 1.0 / (1.0 + CONSTANTS.PI_1 * T_t2_baseline + CONSTANTS.PI_2 * Math.pow(T_t2_baseline, 2));
+        
+        
+        omega_invest = 1.0 / (1.0 + CONSTANTS.PI_1 * T_t2_invest + CONSTANTS.PI_2 * Math.pow(T_t2_invest, 2));
+        delta_omega = omega_invest - omega_baseline;
+
+        // --- Step 3: Calculate Indirect Output Change in t+2 ---
+        const y_t1_invest_with_new_omega = omega_invest * y_t1_invest;
+        const y_t1_invest_with_old_omega = omega_baseline * y_t1_invest;
+        delta_y_t2_from_omega = y_t1_invest_with_new_omega - y_t1_invest_with_old_omega;
+    }
+
+    // --- Step 4: Calculate Net Effect ---
+    const net_effect = delta_y_t1 + delta_y_t2_from_omega;
+
+    return {
+        investAmount: amount,
+        investType: isBrown ? 'Brown' : 'Green',
+        delta_y_t1,
+        delta_e,
+        delta_T,
+        omega_baseline,
+        omega_invest,
+        delta_omega,
+        delta_y_t2_from_omega,
+        net_effect
+    };
+}
+    
+    function getColorClass(value) {
+        if (Math.abs(value) < 0.00005) return 'neutral';
+        return value > 0 ? 'positive' : 'negative';
+    }
+    
+    function renderFlowDiagram(effects) {
+        const isBrown = effects.investType === 'Brown';
+        const investSymbol = isBrown ? 'i<sub>3,t</sub>' : 'i<sub>1,t</sub>';
+        const capitalType = isBrown ? '3' : '1';  // Just the number for building subscripts
+        const omegaChangeClass = Math.abs(effects.delta_omega) < 0.0001 ? 'neutral' : (effects.delta_omega > 0 ? 'positive' : 'negative');
+        const delta_y_t1_class = getColorClass(effects.delta_y_t1);
+        const delta_y_t2_class = getColorClass(effects.delta_y_t2_from_omega);
+        
+        // Calculate depreciation cascade (10% depreciation rate)
+        const DELTA = 0.10;
+        let depreciationCascade = [];
+        let currentCapital = effects.investAmount;
+        for (let p = 1; p <= 4; p++) {
+            currentCapital = currentCapital * (1 - DELTA);
+            depreciationCascade.push(currentCapital);
+        }
+        
+        const html = `
+            <div class="flow-container">
+                <div class="flow-level">
+                    <div class="flow-box start">
+                        <div class="flow-label">Investment</div>
+                        <div class="flow-value">${investSymbol} = ${effects.investAmount.toFixed(1)}</div>
+                        <div class="period-label">Period t</div>
+                    </div>
+                </div>
+                <div class="diagonal-split" style="margin-top: -80px;">
+                    <div class="branch-container">
+                        <div class="diagonal-arrow">↙</div>
+                        <div class="arrow-label">Direct Production Channel</div>
+                        <div class="flow-box ${effects.delta_y_t1 > 0 ? 'positive' : 'negative'}">
+                            <div class="flow-label">Δ Output<sub>t+1</sub></div>
+                            <div class="flow-change ${effects.delta_y_t1 > 0 ? 'up' : 'down'}">
+                                ${effects.delta_y_t1 > 0 ? '↑' : '↓'} ${effects.delta_y_t1.toFixed(3)}
+                            </div>
+                            <div class="period-label">assuming Ω<sub>t+1</sub> constant</div>
+                        </div>
+                    </div>
+                    <div class="branch-container center-branch" style="margin-top: 80px;">
+                        <div class="arrow-label">Capital Depreciation</div>
+                        <div class="cascade-box-flow">
+                            <div class="flow-label">k<sub>${capitalType},t+1</sub></div>
+                            <div class="flow-value" style="font-size: 16px;">${depreciationCascade[0].toFixed(3)} remains</div>
+                            <div class="cascade-detail">90% remains | <span style="color: #dc3545;">-${(effects.investAmount * DELTA).toFixed(3)} loss</span></div>
+                        </div>
+                        <div class="flow-arrow" style="margin: 0; font-size: 16px;">↓</div>
+                        <div class="cascade-box-flow">
+                            <div class="flow-label">k<sub>${capitalType},t+2</sub></div>
+                            <div class="flow-value" style="font-size: 16px;">${depreciationCascade[1].toFixed(3)} remains</div>
+                            <div class="cascade-detail">90% remains | <span style="color: #dc3545;">-${(depreciationCascade[0] * DELTA).toFixed(3)} loss</span></div>
+                        </div>
+                        <div class="flow-arrow" style="margin: 0; font-size: 16px;">↓</div>
+                        <div class="cascade-box-flow">
+                            <div class="flow-label">k<sub>${capitalType},t+3</sub></div>
+                            <div class="flow-value" style="font-size: 16px;">${depreciationCascade[2].toFixed(3)} remains</div>
+                            <div class="cascade-detail">90% remains | <span style="color: #dc3545;">-${(depreciationCascade[1] * DELTA).toFixed(3)} loss</span></div>
+                        </div>
+                        <div class="flow-arrow" style="margin: 0; font-size: 16px;">↓</div>
+                        <div class="cascade-box-flow">
+                            <div class="flow-label">k<sub>${capitalType},t+4</sub></div>
+                            <div class="flow-value" style="font-size: 16px;">${depreciationCascade[3].toFixed(3)} remains</div>
+                            <div class="cascade-detail">90% remains | <span style="color: #dc3545;">-${(depreciationCascade[2] * DELTA).toFixed(3)} loss</span></div>
+                        </div>
+                    </div>
+                    <div class="branch-container right-branch">
+                        <div class="diagonal-arrow">↘</div>
+                        <div class="arrow-label">Indirect Climate Channel</div>
+                        <div class="flow-box ${effects.delta_e < 0 ? 'positive' : 'negative'}">
+                            <div class="flow-label">Δ Emissions<sub>t+1</sub></div>
+                            <div class="flow-change ${effects.delta_e < 0 ? 'up' : 'down'}">
+                                ${effects.delta_e > 0 ? '↑' : '↓'} ${effects.delta_e.toFixed(3)}
+                            </div>
+                            <div class="period-label">Period t+1</div>
+                        </div>
+                        <div class="flow-arrow" style="margin: 0;">↓</div>
+                        <div class="flow-box ${effects.delta_e < 0 ? 'positive' : 'negative'}">
+                            <div class="flow-label">Δ Temperature<sub>t+2</sub></div>
+                            <div class="flow-change ${effects.delta_e < 0 ? 'up' : 'down'}">
+                                ${CONSTANTS.XI * effects.delta_e > 0 ? '↑' : '↓'} ${Math.abs(CONSTANTS.XI * effects.delta_e).toFixed(4)}
+                            </div>
+                            <div class="period-label">Period t+2</div>
+                        </div>
+                        <div class="flow-arrow" style="margin: 0;">↓</div>
+                        <div class="flow-box ${omegaChangeClass}">
+                            <div class="flow-label">Δ Ω<sub>t+2</sub></div>
+                            ${Math.abs(effects.delta_omega) > 0.0001 ? `
+                            <div class="flow-change ${effects.delta_omega > 0 ? 'up' : 'down'}">
+                                ${effects.delta_omega > 0 ? '↑' : '↓'} ${Math.abs(effects.delta_omega).toFixed(4)}
+                                <br><span style="font-size: 13px;">(${Math.abs(effects.delta_omega * 100).toFixed(2)}% Output ${effects.delta_omega > 0 ? 'gain' : 'loss'})</span>
+                            </div>
+                            ` : `
+                            <div class="flow-change neutral">
+                                ${CONSTANTS.isBaseline ? 'No environmental effects' : 'Negligible change (< 0.0001)'}
+                            </div>
+                            `}
+                            <div class="period-label">Ω w/o change: ${effects.omega_baseline.toFixed(4)} | Ω w/ change: ${effects.omega_invest.toFixed(4)}</div>
+                        </div>
+                        <div class="flow-arrow" style="margin: 0;">↓</div>
+                        <div class="flow-box ${Math.abs(effects.delta_y_t2_from_omega) < 0.0001 ? 'neutral' : (effects.delta_y_t2_from_omega > 0 ? 'positive' : 'negative')}">
+                            <div class="flow-label">Δ Output<sub>t+2</sub> (from Ω change)</div>
+                            ${Math.abs(effects.delta_y_t2_from_omega) > 0.0001 ? `
+                            <div class="flow-change ${effects.delta_y_t2_from_omega > 0 ? 'up' : 'down'}">
+                                ${effects.delta_y_t2_from_omega > 0 ? '↑' : '↓'} ${Math.abs(effects.delta_y_t2_from_omega).toFixed(4)}
+                            </div>
+                            ` : `
+                            <div class="flow-change neutral">
+                                ${CONSTANTS.isBaseline ? 'No environmental effects' : 'Negligible (< 0.0001)'}
+                            </div>
+                            `}
+                            <div class="period-label">Period t+2</div>
+                        </div>
+                    </div>
+                </div>
+                <div class="flow-arrow" style="font-size: 22px; margin: -40px 0 5px 0;">↓</div>
+                <div class="flow-level">
+                    <div class="flow-box ${effects.net_effect > 0 ? 'positive' : 'negative'}" style="min-width: 320px; max-width: 500px;">
+                        <div class="flow-label" style="font-size: 15px;"><strong>Δ Net Effect</strong></div>
+                        <div class="flow-value" style="font-size: 20px;">
+                            <span class="net-effect-number ${delta_y_t1_class}">${effects.delta_y_t1.toFixed(4)}</span> + 
+                            <span class="net-effect-number ${delta_y_t2_class}">${effects.delta_y_t2_from_omega.toFixed(4)}</span> = 
+                            <span class="net-effect-number ${getColorClass(effects.net_effect)}">${effects.net_effect.toFixed(4)}</span>
+                        </div>
+                        <div class="flow-change ${effects.net_effect > 0 ? 'up' : 'down'}">
+                            Overall ${effects.net_effect > 0 ? 'gain' : 'loss'}: ${effects.net_effect > 0 ? '↑' : '↓'} ${Math.abs(effects.net_effect).toFixed(4)}
+                        </div>
+                        <div class="alert ${effects.net_effect > 0 ? 'alert-success' : 'alert-warning'} summary-box">
+                            <strong>Summary:</strong> Investing ${effects.investAmount.toFixed(1)} in ${effects.investType === 'Brown' ? 'Type-3' : 'Type-1'} capital 
+                            gives an immediate output ${effects.delta_y_t1 > 0 ? 'increase' : 'decrease'} of ${Math.abs(effects.delta_y_t1).toFixed(4)}, 
+                            ${CONSTANTS.isBaseline ? 'with no temperature effect' : 
+                            (Math.abs(effects.delta_y_t2_from_omega) < 0.0001 ? 'with negligible environmental effects' :
+                            `plus ${effects.delta_y_t2_from_omega > 0 ? 'a gain' : 'a loss'} of ${Math.abs(effects.delta_y_t2_from_omega).toFixed(4)} from environmental ${isBrown ? 'damage' : 'benefits'}`)}, 
+                            for a net effect of ${effects.net_effect > 0 ? '+' : ''}${effects.net_effect.toFixed(4)}.
+                        </div>
+                    </div>
+                </div>
+            </div>
+        `;
+        flowDiagram.innerHTML = html;
+    }
+
+    
+    function updateFlowDiagram() {
+        const investType = investTypeSelect.value;
+        const amount = parseFloat(investAmountInput.value) || 0;
+        
+        if (amount <= 0) {
+            flowDiagram.innerHTML = '<p class="text-center text-muted small">Enter an investment amount > 0 to see effects.</p>';
+            return;
+        }
+        
+        const effects = calculateFlowEffects(investType, amount);
+        renderFlowDiagram(effects);
+    }
+    
+    investTypeSelect.addEventListener('change', updateFlowDiagram);
+    investAmountInput.addEventListener('input', updateFlowDiagram);
+    
+    // Initial render
+    updateFlowDiagram();
+});
+</script>
+{{ endblock }}

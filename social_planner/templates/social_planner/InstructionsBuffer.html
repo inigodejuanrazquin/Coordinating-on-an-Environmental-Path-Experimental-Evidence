@@ -1,0 +1,198 @@
+{{ block title }}
+    Transition to Decentralized Market Treatment
+{{ endblock }}
+
+{{ block content }}
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
+<script>
+// Configuration for LaTeX rendering
+MathJax = {
+  tex: {
+    inlineMath: [['$', '$'], ['\\(', '\\)']],
+    displayMath: [['$$', '$$'], ['\\[', '\\]']]
+  },
+  svg: {
+    fontCache: 'global'
+  }
+};
+</script>
+<script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+
+<div class="container mt-4">
+    <div class="row">
+        <div class="col-md-12">
+            <div class="alert alert-warning text-center">
+                <h3>⚠️ Important: A New Economy is About to Begin</h3>
+                <p class="lead">You have completed the Social Planner economy.</p>
+                <p class="lead">You are now transitioning to the <strong>Decentralized Market economy</strong>.</p>
+                <p><strong>Please read the instructions below carefully, as the rules have changed.</strong></p>
+            
+<div class="alert alert-info mt-3">
+<h6><strong>Why Type-3 and Type-1?</strong></h6>
+<p>We call them Type-3 and Type-1 because <strong>Type-3 capital produces 3 times as much emissions as Type-1 capital</strong>.</p>
+<p>Specifically, the emissions formula is: <strong>emissions = k₁ + 3×k₃</strong></p>
+<p>where k₁ is Type-1 capital and k₃ is Type-3 capital.</p>
+</div>
+</div>
+        </div>
+    </div>
+
+    <div class="card mb-4">
+        <div class="card-header"><h4>Your New Role in the Economy</h4></div>
+        <div class="card-body">
+            <p>In this new economy, you will be assigned to a 5-person economy with a specific role.</p>
+            <ul>
+                <li><strong>Economy Assignment:</strong> You are in Economy #{{ dm_economy_id }}</li>
+                <li><strong>Your Assigned Role:</strong> You are <strong>Agent {{ agent_type }}</strong></li>
+            </ul>
+            <div class="card bg-light mt-3">
+                <div class="card-body">
+                    <h6 class="card-title"><strong>Your Production Function</strong></h6>
+                    <p class="mb-2">As Agent {{ agent_type }}, your firm's production is determined by the following function:</p>
+                    <div class="text-center" style="font-size: 18px; padding: 15px; background: white; border-radius: 5px;">
+                        {% if is_baseline %}
+                            $$ y_{i,t} = \textcolor{red}{\textbf{ {{ productivity }} }} \cdot k_{1,i,t}^{0.22} \cdot k_{3,i,t}^{0.33} $$
+                        {% else %}
+                            $$ y_{i,t} = \textcolor{red}{\textbf{ {{ productivity }} }} \cdot \Omega_t \cdot k_{1,i,t}^{0.22} \cdot k_{3,i,t}^{0.33} $$
+                        {% endif %}
+                    </div>
+                    
+                    <h6 class="card-title mt-4"><strong>Your Utility Function</strong></h6>
+                    <p class="mb-2">Your utility (in dollar units) is calculated from your consumption:</p>
+                    <div class="text-center" style="font-size: 18px; padding: 15px; background: white; border-radius: 5px;">
+                        $$ u_{i,t} = \textcolor{red}{\textbf{ {{ payoff_conversion_rate }} }} \times \sqrt{c_{i,t}} $$
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="card mb-4">
+        <div class="card-header"><h4>Your Goal and Payoff</h4></div>
+        <div class="card-body">
+            <p>In any given period, consumption generates utility. <strong>More consumption → More utility → More money.</strong></p>
+
+            <div class="alert alert-success mt-3">
+                <h5 class="alert-heading"><strong>YOUR GOAL:</strong></h5>
+                <p class="mb-0"><strong>Your goal is to maximize your total payoff across all periods of this economy.</strong></p>
+                <p class="mb-0">On top of your <strong>$10 show-up fee</strong>, your final payment depends on the total utility you accumulate.</p>
+
+                <div class="mt-4">
+                    <p class="mb-2">For your assigned role (<strong>Agent {{ agent_type }}</strong>), your utility is calculated as:</p>
+                    <div class="text-center py-3 bg-light rounded border">
+                        <p class="mb-1 h5">
+                            <strong>Utility = {{ payoff_conversion_rate }} × √(consumption)</strong>
+                        </p>
+                        <p class="mb-0 text-muted small">
+                            Since utility points directly convert to dollars (1 utility point = $1), your exchange rate of {{ payoff_conversion_rate }} determines how much your consumption is worth in monetary terms.
+                        </p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="row mb-4">
+        <div class="col-md-12">
+            <div class="card border-danger">
+                <div class="card-header bg-danger text-white text-center">
+                    <h4 id="timer-display">⏱️ Please wait for instructions to be reviewed.</h4>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row"><div class="col-md-12"><h2 class="text-center mb-4">Detailed Rules for the Decentralized Market</h2></div></div>
+
+    <div class="card mb-4">
+        <div class="card-header"><h4> Capital Markets (NEW)</h4></div>
+        <div class="card-body">
+             <p>Each period, <strong>before</strong> making your consumption/investment decisions, you will participate in <strong>two simultaneous capital markets</strong>:</p>
+            <ol>
+                <li><strong>Type-3 Capital Market:</strong> Buy or sell Type-3 capital (k₃) with the other 4 agents in your economy.</li>
+                <li><strong>Type-1 Capital Market:</strong> Buy or sell Type-1 capital (k₁) with the other 4 agents in your economy.</li>
+            </ol>
+             <h5 class="mt-3">How Markets Work:</h5>
+            <ul>
+                <li>You can submit <strong>bid prices</strong> (the maximum you are willing to pay to buy) and <strong>ask prices</strong> (the minimum you will accept to sell).</li>
+                <li>You also specify the <strong>quantities</strong> you wish to trade.</li>
+                <li>All trades execute at a single <strong>market-clearing price</strong> where supply meets demand.</li>
+            </ul>
+        </div>
+    </div>
+
+    <div class="card mb-4">
+        <div class="card-header"><h4>How Each Period Works</h4></div>
+        <div class="card-body">
+            <div class="period-timeline">
+                <div class="timeline-line-instr"></div>
+                <div class="timeline-steps-instr">
+                    <div class="step-instr">
+                        <div class="step-circle-instr">1</div>
+                        <div class="step-label-instr">Production</div>
+                        <div class="step-description-instr">Your capital produces your individual output.</div>
+                    </div>
+                    <div class="step-instr step-market-instr">
+                        <div class="step-circle-instr step-circle-market-instr">2</div>
+                        <div class="step-label-instr">Capital Markets</div>
+                        <div class="step-description-instr">Trade Type-3 and Type-1 capital with others.</div>
+                    </div>
+                    <div class="step-instr">
+                        <div class="step-circle-instr">3</div>
+                        <div class="step-label-instr">Allocation Decision</div>
+                        <div class="step-description-instr">Allocate your final output to consumption and investments.</div>
+                    </div>
+                    <div class="step-instr">
+                        <div class="step-circle-instr">4</div>
+                        <div class="step-label-instr">Capital Update</div>
+                        <div class="step-description-instr">Your capital stock depreciates and investments are added.</div>
+                    </div>
+                    <div class="step-instr">
+                        <div class="step-circle-instr">5</div>
+                        <div class="step-label-instr">Environment Update</div>
+                        <div class="step-description-instr">The economy's total emissions affect the shared temperature.</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row mt-4">
+        <div class="col-md-12 text-center">
+            <button id="continue-btn" class="otree-btn-next btn btn-primary btn-lg">
+                Continue to Decentralized Market
+            </button>
+            <p class="text-muted mt-2" id="wait-message">You may proceed when you are ready.</p>
+        </div>
+    </div>
+</div>
+
+<style>
+/* (Styles from your previous file kept herre) */
+.period-timeline { position: relative; padding: 40px 20px; margin: 30px 0; }
+.timeline-line-instr { position: absolute; top: 70px; left: 10%; right: 10%; height: 3px; background: linear-gradient(to right, #007bff, #28a745); z-index: 1; }
+.timeline-steps-instr { display: flex; justify-content: space-between; align-items: flex-start; position: relative; z-index: 2; }
+.step-instr { flex: 1; display: flex; flex-direction: column; align-items: center; text-align: center; padding: 0 10px; }
+.step-circle-instr { width: 60px; height: 60px; border-radius: 50%; background: #007bff; color: white; display: flex; align-items: center; justify-content: center; font-size: 24px; font-weight: bold; margin-bottom: 15px; box-shadow: 0 4px 8px rgba(0,0,0,0.2); border: 4px solid white; }
+.step-circle-market-instr { background: #17a2b8; animation: pulse 2s infinite; }
+@keyframes pulse { 0%, 100% { box-shadow: 0 4px 8px rgba(0,0,0,0.2); } 50% { box-shadow: 0 4px 16px rgba(23, 162, 184, 0.6); } }
+.step-label-instr { font-weight: bold; font-size: 16px; color: #333; margin-bottom: 10px; min-height: 40px; display: flex; align-items: center; justify-content: center; }
+.step-description-instr { font-size: 13px; color: #666; line-height: 1.5; max-width: 220px; }
+.step-market-instr { background: rgba(23, 162, 184, 0.05); border-radius: 10px; padding: 10px; margin: -10px; }
+</style>
+
+<script>
+
+document.addEventListener('DOMContentLoaded', function() {
+    const continueBtn = document.getElementById('continue-btn');
+    const waitMessage = document.getElementById('wait-message');
+    const timerDisplay = document.getElementById('timer-display');
+    
+    continueBtn.disabled = false;
+    waitMessage.textContent = 'You may proceed when you are ready.';
+    timerDisplay.innerHTML = '<span class="text-success">Instructions Complete</span>';
+});
+</script>
+
+{{ endblock }}
